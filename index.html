@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Shop Math">
+<title>Shop Math</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="theme-color" content="#121417">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<style>
+  :root{
+    --bg:#121417; --panel:#1b1f24; --line:#2c323a; --text:#e8eaed; --dim:#9aa3ad;
+    --accent:#f2b134; --good:#5fd38d; --warn:#ff8a65;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);
+    font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  header{padding:14px 16px 6px}
+  h1{margin:0;font-size:20px;letter-spacing:.3px}
+  h1 span{color:var(--accent)}
+  nav{display:flex;gap:6px;overflow-x:auto;padding:8px 12px 10px;position:sticky;top:0;
+    background:var(--bg);z-index:2;border-bottom:1px solid var(--line);scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  nav button{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);color:var(--dim);
+    padding:9px 14px;border-radius:999px;font-size:15px;font-weight:600}
+  nav button.on{background:var(--accent);color:#1a1300;border-color:var(--accent)}
+  main{padding:12px;max-width:560px;margin:0 auto}
+  section{display:none}
+  section.on{display:block}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+  .card h2{margin:0 0 10px;font-size:16px;color:var(--accent)}
+  label{display:block;font-size:13px;color:var(--dim);margin:10px 0 4px}
+  .row{display:flex;gap:8px}
+  .row>*{flex:1;min-width:0}
+  input,select{width:100%;font-size:20px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+    background:#0e1013;color:var(--text);-webkit-appearance:none;appearance:none}
+  select{font-size:17px}
+  input:focus,select:focus{outline:2px solid var(--accent);border-color:transparent}
+  .out{margin-top:12px;display:grid;gap:8px}
+  .res{display:flex;justify-content:space-between;align-items:baseline;background:#0e1013;
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .res b{font-size:22px;font-variant-numeric:tabular-nums}
+  .res span{color:var(--dim);font-size:14px}
+  .res.main{border-color:var(--accent)}
+  .res.main b{color:var(--accent)}
+  .note{font-size:13px;color:var(--dim);margin-top:10px}
+  .note code{color:var(--text)}
+  .warn{color:var(--warn)}
+  table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:15px}
+  td{padding:6px 4px;border-bottom:1px solid var(--line)}
+  td:nth-child(even){color:var(--dim);text-align:right;padding-right:12px}
+  footer{color:var(--dim);font-size:12px;text-align:center;padding:10px 16px 30px}
+</style>
+</head>
+<body>
+<header><h1>Shop <span>Math</span></h1></header>
+<nav id="tabs">
+  <button data-t="torque">Torque</button>
+  <button data-t="ext">Extension</button>
+  <button data-t="frac">Fractions</button>
+  <button data-t="bend">Bend</button>
+  <button data-t="conv">Convert</button>
+</nav>
+<main>
+
+<!-- TORQUE CONVERSION -->
+<section id="torque">
+  <div class="card">
+    <h2>Torque conversion</h2>
+    <div class="row">
+      <div><label>Value</label><input id="tq-v" type="number" inputmode="decimal" value="120"></div>
+      <div><label>Unit</label>
+        <select id="tq-u">
+          <option value="inlb">in-lb</option>
+          <option value="ftlb">ft-lb</option>
+          <option value="nm">N·m</option>
+          <option value="inoz">in-oz</option>
+        </select></div>
+    </div>
+    <div class="out" id="tq-out"></div>
+  </div>
+</section>
+
+<!-- EXTENSION CORRECTION -->
+<section id="ext">
+  <div class="card">
+    <h2>Torque wrench + extension</h2>
+    <label>Required torque at the fastener (T<sub>A</sub>)</label>
+    <div class="row">
+      <input id="ex-ta" type="number" inputmode="decimal" value="300">
+      <select id="ex-u" style="flex:0 0 96px"><option>in-lb</option><option>ft-lb</option><option>N·m</option></select>
+    </div>
+    <div class="row">
+      <div><label>Wrench length L (in)</label><input id="ex-l" type="number" inputmode="decimal" value="12"></div>
+      <div><label>Extension E (in)</label><input id="ex-e" type="number" inputmode="decimal" value="3"></div>
+    </div>
+    <div class="out" id="ex-out"></div>
+    <p class="note">
+      <code>T<sub>W</sub> = T<sub>A</sub> × L ÷ (L + E)</code><br>
+      L = center of the handle grip to the center of the drive. E = center of the drive to the center of the fastener, measured along the wrench's line.
+      Use a negative E if the adapter points back toward the handle. An adapter at 90° to the wrench needs no correction.
+    </p>
+  </div>
+</section>
+
+<!-- FRACTIONS -->
+<section id="frac">
+  <div class="card">
+    <h2>Decimal → nearest fraction</h2>
+    <div class="row">
+      <div><label>Decimal (in)</label><input id="fr-d" type="number" inputmode="decimal" value="0.3125"></div>
+      <div><label>Precision</label>
+        <select id="fr-p"><option value="64">1/64</option><option value="32">1/32</option><option value="16">1/16</option><option value="8">1/8</option></select></div>
+    </div>
+    <div class="out" id="fr-out"></div>
+  </div>
+  <div class="card">
+    <h2>Fraction → decimal</h2>
+    <label>e.g. 3/8 or 1 7/16</label>
+    <input id="fr-f" type="text" inputmode="text" value="1 7/16" autocapitalize="off" autocomplete="off">
+    <div class="out" id="fr-out2"></div>
+  </div>
+  <div class="card">
+    <h2>64ths chart</h2>
+    <table id="fr-tab"></table>
+  </div>
+</section>
+
+<!-- BEND ALLOWANCE -->
+<section id="bend">
+  <div class="card">
+    <h2>Sheet metal layout</h2>
+    <div class="row">
+      <div><label>Thickness T (in)</label><input id="bd-t" type="number" inputmode="decimal" value="0.040"></div>
+      <div><label>Bend radius R (in)</label><input id="bd-r" type="number" inputmode="decimal" value="0.125"></div>
+    </div>
+    <label>Degrees of bend (how far the metal turns; a right-angle flange = 90)</label>
+    <input id="bd-a" type="number" inputmode="decimal" value="90">
+    <div class="row">
+      <div><label>Leg A to mold line (in)</label><input id="bd-la" type="number" inputmode="decimal" value="1.00"></div>
+      <div><label>Leg B to mold line (in)</label><input id="bd-lb" type="number" inputmode="decimal" value="1.50"></div>
+    </div>
+    <div class="out" id="bd-out"></div>
+    <p class="note">
+      <code>BA = (0.01743·R + 0.0078·T) × degrees</code><br>
+      <code>K = tan(degrees ÷ 2)</code> &nbsp; <code>SB = K × (R + T)</code><br>
+      Flat length (one bend) = A + B − 2·SB + BA. Make the sight line one radius in from the bend line, on the side that goes under the brake nose.
+    </p>
+  </div>
+</section>
+
+<!-- CONVERSIONS -->
+<section id="conv">
+  <div class="card">
+    <h2>Unit conversion</h2>
+    <label>Type</label>
+    <select id="cv-k"></select>
+    <div class="row">
+      <div><label id="cv-la"></label><input id="cv-a" type="number" inputmode="decimal"></div>
+      <div><label id="cv-lb"></label><input id="cv-b" type="number" inputmode="decimal"></div>
+    </div>
+    <p class="note">Edit either box. The other one updates.</p>
+  </div>
+</section>
+
+</main>
+<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const num = id => parseFloat($(id).value);
+const fmt = (x, d=3) => !isFinite(x) ? "—" : (+x.toFixed(d)).toLocaleString(undefined,{maximumFractionDigits:d});
+const res = (val, unit, main) => `<div class="res${main?' main':''}"><b>${val}</b><span>${unit}</span></div>`;
+
+/* ---------- tabs ---------- */
+const tabs = [...document.querySelectorAll('#tabs button')];
+function show(t){
+  tabs.forEach(b=>b.classList.toggle('on', b.dataset.t===t));
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('on', s.id===t));
+  try{ localStorage.setItem('sm-tab', t); }catch(e){}
+}
+tabs.forEach(b=>b.addEventListener('click',()=>show(b.dataset.t)));
+let start='torque'; try{ start = localStorage.getItem('sm-tab') || 'torque'; }catch(e){}
+show($(start)?start:'torque');
+
+/* ---------- torque ---------- */
+// everything to in-lb
+const TQ = { inlb:1, ftlb:12, nm:8.850746, inoz:1/16 };
+const TQN = { inlb:'in-lb', ftlb:'ft-lb', nm:'N·m', inoz:'in-oz' };
+function torque(){
+  const v=num('tq-v'), u=$('tq-u').value, inlb=v*TQ[u];
+  $('tq-out').innerHTML = Object.keys(TQ).filter(k=>k!==u)
+    .map((k,i)=>res(fmt(inlb/TQ[k], k==='inoz'?1:2), TQN[k], i===0)).join('');
+}
+['tq-v','tq-u'].forEach(i=>$(i).addEventListener('input',torque));
+
+/* ---------- extension ---------- */
+function ext(){
+  const ta=num('ex-ta'), L=num('ex-l'), E=num('ex-e'), u=$('ex-u').value;
+  const tw = ta*L/(L+E);
+  let h = res(fmt(tw,1), u+' set on wrench', true);
+  if(L+E<=0 || L<=0) h = `<div class="note warn">L must be positive and L + E must be greater than 0.</div>`;
+  else h += res(fmt(tw-ta,1), u+' difference');
+  $('ex-out').innerHTML = h;
+}
+['ex-ta','ex-l','ex-e','ex-u'].forEach(i=>$(i).addEventListener('input',ext));
+
+/* ---------- fractions ---------- */
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+function fracStr(n,d){ // n/d as mixed number, reduced
+  const neg=n<0; n=Math.abs(n);
+  const w=Math.floor(n/d); let r=n-w*d;
+  let s='';
+  if(r){ const g=gcd(r,d); s=`${r/g}/${d/g}`; }
+  const out = w ? (s? `${w} ${s}` : `${w}`) : (s||'0');
+  return (neg?'−':'')+out;
+}
+function dec2frac(){
+  const x=num('fr-d'), p=+$('fr-p').value;
+  if(!isFinite(x)){ $('fr-out').innerHTML=''; return; }
+  const n=Math.round(x*p), approx=n/p, err=x-approx;
+  $('fr-out').innerHTML =
+    res(fracStr(n,p)+'"', 'nearest 1/'+p, true) +
+    res(fmt(approx,6), 'decimal of that fraction') +
+    res((err>=0?'+':'')+fmt(err,4)+'"', err===0?'exact':(err>0?'actual is larger':'actual is smaller')) +
+    res(fmt(x*25.4,3), 'mm');
+}
+function frac2dec(){
+  const s=$('fr-f').value.trim();
+  const m=s.match(/^(-)?\s*(?:(\d+)\s+)?(\d+)\s*\/\s*(\d+)$/) ;
+  const m2=s.match(/^(-)?\s*(\d+(?:\.\d+)?)$/);
+  let v=NaN;
+  if(m && +m[4]!==0) v=(m[2]?+m[2]:0)+ (+m[3])/(+m[4]), v=m[1]?-v:v;
+  else if(m2) v=+m2[2]*(m2[1]?-1:1);
+  $('fr-out2').innerHTML = isFinite(v)
+    ? res(fmt(v,6)+'"','decimal inches',true)+res(fmt(v*25.4,3),'mm')
+    : `<div class="note warn">Type it as 3/8, 1 7/16 or 0.25.</div>`;
+}
+['fr-d','fr-p'].forEach(i=>$(i).addEventListener('input',dec2frac));
+$('fr-f').addEventListener('input',frac2dec);
+(function chart(){
+  let rows='';
+  for(let i=1;i<=32;i++){
+    const a=i, b=i+32;
+    rows+=`<tr><td>${fracStr(a,64)}</td><td>${(a/64).toFixed(6)}</td><td>${fracStr(b,64)}</td><td>${(b/64).toFixed(6)}</td></tr>`;
+  }
+  $('fr-tab').innerHTML=rows;
+})();
+
+/* ---------- bend ---------- */
+function bend(){
+  const T=num('bd-t'), R=num('bd-r'), a=num('bd-a'), A=num('bd-la'), B=num('bd-lb');
+  if(!(a>0 && a<180)){ $('bd-out').innerHTML=`<div class="note warn">Degrees of bend must be between 0 and 180.</div>`; return; }
+  const BA=(0.01743*R+0.0078*T)*a;
+  const K=Math.tan(a*Math.PI/360);
+  const SB=K*(R+T);
+  const flat=A+B-2*SB+BA;
+  let h = res(fmt(BA,4)+'"','bend allowance',true)
+        + res(fmt(SB,4)+'"','setback')
+        + res(fmt(K,4),'K-factor');
+  if(isFinite(A)&&isFinite(B)){
+    h += res(fmt(A-SB,4)+'"','flat A (edge → BL)')
+       + res(fmt(B-SB,4)+'"','flat B (BL → edge)')
+       + res(fmt(flat,4)+'"','total flat length',true);
+  }
+  $('bd-out').innerHTML=h;
+}
+['bd-t','bd-r','bd-a','bd-la','bd-lb'].forEach(i=>$(i).addEventListener('input',bend));
+
+/* ---------- conversions ---------- */
+const CV = [
+  ['Length','in','mm', x=>x*25.4, x=>x/25.4],
+  ['Length','ft','m', x=>x*0.3048, x=>x/0.3048],
+  ['Temperature','°F','°C', x=>(x-32)*5/9, x=>x*9/5+32],
+  ['Pressure','psi','kPa', x=>x*6.894757, x=>x/6.894757],
+  ['Pressure','psi','bar', x=>x*0.06894757, x=>x/0.06894757],
+  ['Pressure','inHg','hPa (mb)', x=>x*33.8639, x=>x/33.8639],
+  ['Weight','lb','kg', x=>x*0.45359237, x=>x/0.45359237],
+  ['Volume','US gal','L', x=>x*3.785412, x=>x/3.785412],
+  ['Volume','US qt','L', x=>x*0.946353, x=>x/0.946353],
+  ['Fuel weight','gal 100LL','lb (≈6.0 lb/gal)', x=>x*6.0, x=>x/6.0],
+  ['Fuel weight','gal Jet-A','lb (≈6.7 lb/gal)', x=>x*6.7, x=>x/6.7],
+];
+$('cv-k').innerHTML = CV.map((c,i)=>`<option value="${i}">${c[0]}: ${c[1]} ↔ ${c[2]}</option>`).join('');
+function cvSetup(){
+  const c=CV[$('cv-k').value];
+  $('cv-la').textContent=c[1]; $('cv-lb').textContent=c[2];
+  if($('cv-a').value==='') $('cv-a').value=1;
+  cvFrom('a');
+}
+function cvFrom(side){
+  const c=CV[$('cv-k').value];
+  if(side==='a'){ const v=num('cv-a'); $('cv-b').value=isFinite(v)?+c[3](v).toFixed(4):''; }
+  else { const v=num('cv-b'); $('cv-a').value=isFinite(v)?+c[4](v).toFixed(4):''; }
+}
+$('cv-k').addEventListener('input',cvSetup);
+$('cv-a').addEventListener('input',()=>cvFrom('a'));
+$('cv-b').addEventListener('input',()=>cvFrom('b'));
+
+/* offline support */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+
+/* init */
+torque(); ext(); dec2frac(); frac2dec(); bend(); cvSetup();
+</script>
+</body>
+</html>
