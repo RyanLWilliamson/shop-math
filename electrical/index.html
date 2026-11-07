@@ -64,6 +64,11 @@
     display:flex;align-items:stretch;gap:4%;padding:0 10%}
   .resistor .band{width:7%}
   .resistor .gap{flex:1}
+  .chips{display:flex;gap:6px;align-items:center;margin-top:12px;flex-wrap:wrap}
+  .chips span{color:var(--dim);font-size:13px;margin-right:2px}
+  .chips button{flex:1;min-width:38px;padding:10px 0;border-radius:10px;border:1px solid var(--line);
+    background:#0e1013;color:var(--accent);font-size:17px;font-weight:700;touch-action:manipulation}
+  .chips button:active{background:var(--accent);color:#00141c}
   footer{color:var(--dim);font-size:12px;text-align:center;padding:10px 16px 30px}
   footer a{color:var(--dim)}
 </style>
@@ -83,15 +88,16 @@
 <section id="ohm">
   <div class="card">
     <h2>Ohm's law + power</h2>
-    <p class="note" style="margin-top:0">Fill in any two. Prefixes work: <code>4.7k</code>, <code>250m</code>, <code>2.2M</code> (m = milli, M = mega).</p>
+    <p class="note" style="margin-top:0">Fill in any two. Tap a box, type the number, then tap a prefix button for k, m and so on (m = milli, M = mega).</p>
     <div class="row">
-      <div><label>Voltage E (V)</label><input id="o-v" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="28"></div>
-      <div><label>Current I (A)</label><input id="o-i" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off"></div>
+      <div><label>Voltage E (V)</label><input id="o-v" class="si" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="28"></div>
+      <div><label>Current I (A)</label><input id="o-i" class="si" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off"></div>
     </div>
     <div class="row">
-      <div><label>Resistance R (Ω)</label><input id="o-r" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="14"></div>
-      <div><label>Power P (W)</label><input id="o-p" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off"></div>
+      <div><label>Resistance R (Ω)</label><input id="o-r" class="si" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="14"></div>
+      <div><label>Power P (W)</label><input id="o-p" class="si" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off"></div>
     </div>
+    <div class="chips"><span>Prefix:</span><button>p</button><button>n</button><button>µ</button><button>m</button><button>k</button><button>M</button><button data-x="1" aria-label="remove prefix">✕</button></div>
     <button class="btn" id="o-clear">Clear</button>
     <div class="out" id="o-out"></div>
     <p class="note"><code>E = I·R</code> &nbsp; <code>P = E·I = I²R = E²/R</code></p>
@@ -108,7 +114,8 @@
       <button data-k="C">Capacitors</button>
     </div>
     <label id="sp-lab">Values (Ω), separated by commas or spaces</label>
-    <textarea id="sp-v" autocomplete="off" autocapitalize="off" spellcheck="false">100, 220, 470</textarea>
+    <textarea id="sp-v" class="si" autocomplete="off" autocapitalize="off" spellcheck="false">100, 220, 470</textarea>
+    <div class="chips"><span>Prefix:</span><button>p</button><button>n</button><button>µ</button><button>m</button><button>k</button><button>M</button><button data-x="sep">,</button></div>
     <div class="out" id="sp-out"></div>
     <p class="note" id="sp-note"></p>
   </div>
@@ -167,16 +174,17 @@
 <section id="ac">
   <div class="card">
     <h2>AC reactance + impedance (series R-L-C)</h2>
-    <p class="note" style="margin-top:0">Leave L or C blank if the circuit doesn't have one. Prefixes work: <code>10m</code> H, <code>47u</code> F, <code>2.2k</code> Ω.</p>
+    <p class="note" style="margin-top:0">Leave L or C blank if the circuit doesn't have one. Use the prefix buttons: 20 + m = 20 mH, 10 + µ = 10 µF.</p>
     <div class="row">
-      <div><label>Frequency (Hz)</label><input id="a-f" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="400"></div>
-      <div><label>Voltage (V, optional)</label><input id="a-v" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="115"></div>
+      <div><label>Frequency (Hz)</label><input id="a-f" class="si" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="400"></div>
+      <div><label>Voltage (V, optional)</label><input id="a-v" class="si" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="115"></div>
     </div>
     <div class="row">
-      <div><label>R (Ω)</label><input id="a-r" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="30"></div>
-      <div><label>L (H)</label><input id="a-l" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="20m"></div>
-      <div><label>C (F)</label><input id="a-c" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="10u"></div>
+      <div><label>R (Ω)</label><input id="a-r" class="si" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="30"></div>
+      <div><label>L (H)</label><input id="a-l" class="si" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="20m"></div>
+      <div><label>C (F)</label><input id="a-c" class="si" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="10µ"></div>
     </div>
+    <div class="chips"><span>Prefix:</span><button>p</button><button>n</button><button>µ</button><button>m</button><button>k</button><button>M</button><button data-x="1" aria-label="remove prefix">✕</button></div>
     <div class="out" id="a-out"></div>
     <p class="note">
       <code>X<sub>L</sub> = 2πfL</code> &nbsp; <code>X<sub>C</sub> = 1 ÷ (2πfC)</code> &nbsp; <code>Z = √(R² + (X<sub>L</sub> − X<sub>C</sub>)²)</code><br>
@@ -358,6 +366,28 @@ function ac(){
   $('a-out').innerHTML=h;
 }
 ['a-f','a-r','a-l','a-c','a-v'].forEach(i=>$(i).addEventListener('input',ac));
+
+/* prefix buttons: number keypad has no letters, so these add k, m, µ, etc. */
+let lastSI=null;
+document.addEventListener('focusin',e=>{ if(e.target.classList&&e.target.classList.contains('si')) lastSI=e.target; });
+document.querySelectorAll('.chips').forEach(row=>{
+  const card=row.closest('.card');
+  row.querySelectorAll('button').forEach(b=>{
+    const keep=e=>e.preventDefault();            // keep the keyboard open
+    b.addEventListener('pointerdown',keep); b.addEventListener('mousedown',keep);
+    b.addEventListener('click',()=>{
+      let el = (lastSI && card.contains(lastSI)) ? lastSI : card.querySelector('.si');
+      if(b.dataset.x==='sep'){ el.value=el.value.replace(/[\s,]*$/,'')+', '; }
+      else {
+        // replace a prefix already on the end of the current number
+        const base=el.value.replace(/(meg|[pnuµμmkKMG])$/i,'');
+        el.value = b.dataset.x ? base : base + b.textContent;
+      }
+      el.dispatchEvent(new Event('input',{bubbles:true}));
+      el.focus();
+    });
+  });
+});
 
 /* offline support */
 if('serviceWorker' in navigator){
