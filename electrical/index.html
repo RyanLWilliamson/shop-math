@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Electrical">
+<title>Aviation Electrical</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="theme-color" content="#121417">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<style>
+  :root{
+    --bg:#121417; --panel:#1b1f24; --line:#2c323a; --text:#e8eaed; --dim:#9aa3ad;
+    --accent:#4fc3f7; --good:#5fd38d; --warn:#ff8a65;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);
+    font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  header{padding:14px 16px 6px;display:flex;justify-content:space-between;align-items:baseline}
+  h1{margin:0;font-size:20px;letter-spacing:.3px}
+  h1 span{color:var(--accent)}
+  header a{color:var(--dim);font-size:13px;text-decoration:none}
+  nav{display:flex;gap:6px;overflow-x:auto;padding:8px 12px 10px;position:sticky;top:0;
+    background:var(--bg);z-index:2;border-bottom:1px solid var(--line);scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  nav button{flex:0 0 auto;border:1px solid var(--line);background:var(--panel);color:var(--dim);
+    padding:9px 14px;border-radius:999px;font-size:15px;font-weight:600}
+  nav button.on{background:var(--accent);color:#00141c;border-color:var(--accent)}
+  main{padding:12px;max-width:560px;margin:0 auto}
+  section{display:none}
+  section.on{display:block}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+  .card h2{margin:0 0 10px;font-size:16px;color:var(--accent)}
+  label{display:block;font-size:13px;color:var(--dim);margin:10px 0 4px}
+  .row{display:flex;gap:8px}
+  .row>*{flex:1;min-width:0}
+  input,select,textarea{width:100%;font-size:20px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+    background:#0e1013;color:var(--text);-webkit-appearance:none;appearance:none;font-family:inherit}
+  select{font-size:17px}
+  textarea{font-size:18px;min-height:64px;resize:vertical}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+  .btn{margin-top:10px;width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);
+    background:#0e1013;color:var(--dim);font-size:15px;font-weight:600}
+  .out{margin-top:12px;display:grid;gap:8px}
+  .res{display:flex;justify-content:space-between;align-items:baseline;background:#0e1013;
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px;gap:10px}
+  .res b{font-size:22px;font-variant-numeric:tabular-nums}
+  .res span{color:var(--dim);font-size:14px;text-align:right}
+  .res.main{border-color:var(--accent)}
+  .res.main b{color:var(--accent)}
+  .res.pass{border-color:var(--good)} .res.pass b{color:var(--good)}
+  .res.fail{border-color:var(--warn)} .res.fail b{color:var(--warn)}
+  .note{font-size:13px;color:var(--dim);margin-top:10px}
+  .note code{color:var(--text)}
+  .warn{color:var(--warn)}
+  .seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .seg button{flex:1;padding:10px;background:#0e1013;color:var(--dim);border:0;font-size:15px;font-weight:600}
+  .seg button.on{background:var(--accent);color:#00141c}
+  .resistor{height:54px;margin:6px 0 4px;position:relative}
+  .resistor .wire{position:absolute;top:25px;left:0;right:0;height:4px;background:#888}
+  .resistor .body{position:absolute;left:18%;right:18%;top:6px;bottom:6px;background:#d9c59a;border-radius:14px;
+    display:flex;align-items:stretch;gap:4%;padding:0 10%}
+  .resistor .band{width:7%}
+  .resistor .gap{flex:1}
+  footer{color:var(--dim);font-size:12px;text-align:center;padding:10px 16px 30px}
+  footer a{color:var(--dim)}
+</style>
+</head>
+<body>
+<header><h1>Aviation <span>Electrical</span></h1><a href="../">Shop Math →</a></header>
+<nav id="tabs">
+  <button data-t="ohm">Ohm's Law</button>
+  <button data-t="sp">Series / Parallel</button>
+  <button data-t="drop">Wire Drop</button>
+  <button data-t="cc">Color Code</button>
+  <button data-t="ac">AC</button>
+</nav>
+<main>
+
+<!-- OHM'S LAW -->
+<section id="ohm">
+  <div class="card">
+    <h2>Ohm's law + power</h2>
+    <p class="note" style="margin-top:0">Fill in any two. Prefixes work: <code>4.7k</code>, <code>250m</code>, <code>2.2M</code> (m = milli, M = mega).</p>
+    <div class="row">
+      <div><label>Voltage E (V)</label><input id="o-v" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="28"></div>
+      <div><label>Current I (A)</label><input id="o-i" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off"></div>
+    </div>
+    <div class="row">
+      <div><label>Resistance R (Ω)</label><input id="o-r" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="14"></div>
+      <div><label>Power P (W)</label><input id="o-p" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off"></div>
+    </div>
+    <button class="btn" id="o-clear">Clear</button>
+    <div class="out" id="o-out"></div>
+    <p class="note"><code>E = I·R</code> &nbsp; <code>P = E·I = I²R = E²/R</code></p>
+  </div>
+</section>
+
+<!-- SERIES / PARALLEL -->
+<section id="sp">
+  <div class="card">
+    <h2>Series / parallel</h2>
+    <div class="seg" id="sp-kind">
+      <button data-k="R" class="on">Resistors</button>
+      <button data-k="L">Inductors</button>
+      <button data-k="C">Capacitors</button>
+    </div>
+    <label id="sp-lab">Values (Ω), separated by commas or spaces</label>
+    <textarea id="sp-v" autocomplete="off" autocapitalize="off" spellcheck="false">100, 220, 470</textarea>
+    <div class="out" id="sp-out"></div>
+    <p class="note" id="sp-note"></p>
+  </div>
+</section>
+
+<!-- WIRE VOLTAGE DROP -->
+<section id="drop">
+  <div class="card">
+    <h2>Wire voltage drop (copper)</h2>
+    <div class="row">
+      <div><label>System</label>
+        <select id="d-sys">
+          <option value="14">14 V DC</option>
+          <option value="28" selected>28 V DC</option>
+          <option value="115">115 V AC</option>
+          <option value="200">200 V AC</option>
+        </select></div>
+      <div><label>Operation</label>
+        <select id="d-op">
+          <option value="c">Continuous</option>
+          <option value="i">Intermittent</option>
+        </select></div>
+    </div>
+    <div class="row">
+      <div><label>Load current (A)</label><input id="d-i" type="number" inputmode="decimal" value="10"></div>
+      <div><label>Wire length (ft)</label><input id="d-l" type="number" inputmode="decimal" value="20"></div>
+    </div>
+    <div class="row">
+      <div><label>Wire size (AWG)</label><select id="d-awg"></select></div>
+      <div><label>Conductor temp (°C)</label><input id="d-t" type="number" inputmode="decimal" value="20"></div>
+    </div>
+    <div class="out" id="d-out"></div>
+    <p class="note">
+      <code>Drop = I × (Ω per 1000 ft ÷ 1000) × length</code>, with resistance corrected for temperature (copper, 0.393%/°C).<br>
+      Length means the total conductor in the circuit. Using the airframe as ground, that's the wire run. With a separate return wire, add both wires together.<br>
+      Allowable drops are the AC 43.13-1B bus-to-equipment limits. This checks voltage drop only. Also check current-carrying capacity (bundle size, altitude and temperature derating) in AC 43.13-1B chapter 11.
+    </p>
+  </div>
+</section>
+
+<!-- COLOR CODE -->
+<section id="cc">
+  <div class="card">
+    <h2>Resistor color code</h2>
+    <div class="seg" id="cc-n">
+      <button data-n="4" class="on">4-band</button>
+      <button data-n="5">5-band</button>
+    </div>
+    <div class="resistor" id="cc-pic"><div class="wire"></div><div class="body"></div></div>
+    <div id="cc-sel"></div>
+    <div class="out" id="cc-out"></div>
+  </div>
+</section>
+
+<!-- AC -->
+<section id="ac">
+  <div class="card">
+    <h2>AC reactance + impedance (series R-L-C)</h2>
+    <p class="note" style="margin-top:0">Leave L or C blank if the circuit doesn't have one. Prefixes work: <code>10m</code> H, <code>47u</code> F, <code>2.2k</code> Ω.</p>
+    <div class="row">
+      <div><label>Frequency (Hz)</label><input id="a-f" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="400"></div>
+      <div><label>Voltage (V, optional)</label><input id="a-v" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="115"></div>
+    </div>
+    <div class="row">
+      <div><label>R (Ω)</label><input id="a-r" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="30"></div>
+      <div><label>L (H)</label><input id="a-l" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="20m"></div>
+      <div><label>C (F)</label><input id="a-c" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" value="10u"></div>
+    </div>
+    <div class="out" id="a-out"></div>
+    <p class="note">
+      <code>X<sub>L</sub> = 2πfL</code> &nbsp; <code>X<sub>C</sub> = 1 ÷ (2πfC)</code> &nbsp; <code>Z = √(R² + (X<sub>L</sub> − X<sub>C</sub>)²)</code><br>
+      Phase angle θ = atan(X ÷ R), power factor = cos θ. Resonance: <code>f₀ = 1 ÷ (2π√(LC))</code>. Aircraft AC is usually 400 Hz.
+    </p>
+  </div>
+</section>
+
+</main>
+<footer>Study and quick-reference aid. Use the aircraft maintenance manual, wiring diagrams and AC 43.13-1B for real work.<br><a href="../">Shop Math</a></footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const res = (val, unit, cls) => `<div class="res${cls?' '+cls:''}"><b>${val}</b><span>${unit}</span></div>`;
+const warn = t => `<div class="note warn">${t}</div>`;
+
+/* ---------- number parsing / formatting with SI prefixes ---------- */
+const PFX = {p:1e-12,n:1e-9,u:1e-6,'µ':1e-6,'μ':1e-6,m:1e-3,k:1e3,K:1e3,M:1e6,G:1e9};
+function parseSI(s){
+  s = String(s).trim().replace(/,/g,'').replace(/\s+/g,'');
+  if(!s) return NaN;
+  s = s.replace(/(ohms?|Ω|[VAWFHvawfh])$/,'');          // ignore a trailing unit letter
+  const m = s.match(/^([-+]?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?)(meg|[pnuµμmkKMG])?$/i);
+  if(!m) return NaN;
+  let mult = 1;
+  if(m[2]){ mult = m[2].toLowerCase()==='meg' ? 1e6 : PFX[m[2]]; }
+  return parseFloat(m[1])*mult;
+}
+function eng(x, unit, sig=4){
+  if(!isFinite(x)) return '—';
+  if(x===0) return '0 '+unit;
+  const steps=[[1e9,'G'],[1e6,'M'],[1e3,'k'],[1,''],[1e-3,'m'],[1e-6,'µ'],[1e-9,'n'],[1e-12,'p']];
+  const a=Math.abs(x);
+  let [d,p]=steps.find(([d])=>a>=d) || steps[steps.length-1];
+  let v=+(x/d).toPrecision(sig);
+  if(Math.abs(v)>=1000 && d<1e9){ const i=steps.findIndex(s=>s[0]===d); [d,p]=steps[i-1]; v=+(x/d).toPrecision(sig); }
+  return `${v} ${p}${unit}`;
+}
+
+/* ---------- tabs ---------- */
+const tabs=[...document.querySelectorAll('#tabs button')];
+function show(t){
+  tabs.forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id===t));
+  try{ localStorage.setItem('ae-tab',t); }catch(e){}
+}
+tabs.forEach(b=>b.addEventListener('click',()=>show(b.dataset.t)));
+let start='ohm'; try{ start=localStorage.getItem('ae-tab')||'ohm'; }catch(e){}
+show($(start)?start:'ohm');
+
+/* ---------- Ohm's law ---------- */
+const OK=['v','i','r','p'];
+function ohm(){
+  const g={}; OK.forEach(k=>{ const raw=$('o-'+k).value; if(raw.trim()!=='') g[k]=parseSI(raw); });
+  const keys=Object.keys(g);
+  const bad=keys.filter(k=>!isFinite(g[k]));
+  if(bad.length) return $('o-out').innerHTML=warn("Can't read one of the values. Type a number like 28, 0.5 or 4.7k.");
+  if(keys.length<2) return $('o-out').innerHTML=warn('Enter any two values.');
+  if(keys.length>2) return $('o-out').innerHTML=warn('Only two boxes can be filled. Clear one so it can be calculated.');
+  let {v,i,r,p}=g; const has=k=>k in g;
+  if(has('v')&&has('i')){ r=v/i; p=v*i; }
+  else if(has('v')&&has('r')){ i=v/r; p=v*v/r; }
+  else if(has('v')&&has('p')){ i=p/v; r=v*v/p; }
+  else if(has('i')&&has('r')){ v=i*r; p=i*i*r; }
+  else if(has('i')&&has('p')){ v=p/i; r=p/(i*i); }
+  else if(has('r')&&has('p')){ v=Math.sqrt(p*r); i=Math.sqrt(p/r); }
+  const out={v:[v,'V','voltage'],i:[i,'A','current'],r:[r,'Ω','resistance'],p:[p,'W','power']};
+  $('o-out').innerHTML = OK.filter(k=>!has(k)).map(k=>res(eng(out[k][0],out[k][1]),out[k][2],'main')).join('')
+    + OK.filter(k=>has(k)).map(k=>res(eng(out[k][0],out[k][1]),out[k][2]+' (given)')).join('');
+}
+OK.forEach(k=>$('o-'+k).addEventListener('input',ohm));
+$('o-clear').addEventListener('click',()=>{ OK.forEach(k=>$('o-'+k).value=''); ohm(); $('o-v').focus(); });
+
+/* ---------- series / parallel ---------- */
+let spKind='R';
+const SPU={R:'Ω',L:'H',C:'F'};
+function sp(){
+  $('sp-lab').textContent=`Values (${SPU[spKind]}), separated by commas or spaces`;
+  const parts=$('sp-v').value.split(/[\s,;]+/).filter(Boolean);
+  const vals=parts.map(parseSI);
+  if(!vals.length) return $('sp-out').innerHTML=warn('Enter at least one value.');
+  if(vals.some(x=>!isFinite(x)||x<=0)) return $('sp-out').innerHTML=warn("Every value must be a positive number, like 100, 4.7k or 10u.");
+  const sum=vals.reduce((a,b)=>a+b,0), rec=1/vals.reduce((a,b)=>a+1/b,0);
+  const ser = spKind==='C'? rec : sum, par = spKind==='C'? sum : rec;
+  $('sp-out').innerHTML = res(eng(ser,SPU[spKind]),'series total','main') + res(eng(par,SPU[spKind]),'parallel total','main')
+    + res(vals.length,'parts');
+  $('sp-note').innerHTML = spKind==='C'
+    ? 'Capacitors are the reverse of resistors: in parallel they add, in series it\'s <code>1 ÷ (1/C₁ + 1/C₂ + …)</code>.'
+    : `Series: <code>${spKind}₁ + ${spKind}₂ + …</code>. Parallel: <code>1 ÷ (1/${spKind}₁ + 1/${spKind}₂ + …)</code>; the total is always smaller than the smallest part.`
+      + (spKind==='L'?' Assumes no mutual inductance between coils.':'');
+}
+document.querySelectorAll('#sp-kind button').forEach(b=>b.addEventListener('click',()=>{
+  spKind=b.dataset.k; document.querySelectorAll('#sp-kind button').forEach(x=>x.classList.toggle('on',x===b)); sp();
+}));
+$('sp-v').addEventListener('input',sp);
+
+/* ---------- wire drop ---------- */
+// Annealed copper, ohms per 1000 ft at 20 °C (standard AWG values; aircraft stranded wire is close to these).
+const AWG=[['24',25.67],['22',16.14],['20',10.15],['18',6.385],['16',4.016],['14',2.525],['12',1.588],['10',0.9989],
+  ['8',0.6282],['6',0.3951],['4',0.2485],['2',0.1563],['1',0.1239],['1/0',0.09827],['2/0',0.07793],['3/0',0.06180],['4/0',0.04901]];
+// AC 43.13-1B allowable drop, bus to equipment: [continuous, intermittent]
+const ALLOW={14:[0.5,1],28:[1,2],115:[4,8],200:[7,14]};
+$('d-awg').innerHTML=AWG.map(([g])=>`<option value="${g}"${g==='16'?' selected':''}>${g} AWG</option>`).join('');
+function drop(){
+  const sys=+$('d-sys').value, op=$('d-op').value, I=+$('d-i').value, L=+$('d-l').value, T=+$('d-t').value;
+  const g=$('d-awg').value;
+  if(!(I>0&&L>0&&isFinite(T))) return $('d-out').innerHTML=warn('Enter a current and a length greater than 0.');
+  const k=1+0.00393*(T-20);
+  const vd=r=>I*(r/1000)*L*k;
+  const r1000=AWG.find(a=>a[0]===g)[1];
+  const d=vd(r1000), lim=ALLOW[sys][op==='c'?0:1], ok=d<=lim;
+  const best=AWG.find(([,r])=>vd(r)<=lim);
+  let h = res(d.toFixed(3)+' V', `drop on ${g} AWG (${(d/sys*100).toFixed(1)}% of ${sys} V)`, ok?'pass':'fail')
+        + res(lim+' V', `allowable, ${op==='c'?'continuous':'intermittent'}`)
+        + res(ok?'OK':'Too much drop', ok?'within limit':'use a larger wire or a shorter run', ok?'pass':'fail')
+        + res(best?best[0]+' AWG':'none listed', best?`smallest wire within limit (${vd(best[1]).toFixed(3)} V)`:'even 4/0 exceeds the limit','main')
+        + res((I*I*r1000/1000*L*k).toFixed(2)+' W','heat lost in the wire');
+  $('d-out').innerHTML=h;
+}
+['d-sys','d-op','d-i','d-l','d-awg','d-t'].forEach(i=>$(i).addEventListener('input',drop));
+
+/* ---------- color code ---------- */
+const COL=[
+ // name, css, digit, multiplier, tolerance %
+ ['Black','#111',0,1,null],['Brown','#7b4a22',1,10,1],['Red','#d32f2f',2,100,2],['Orange','#f57c00',3,1e3,null],
+ ['Yellow','#fbc02d',4,1e4,null],['Green','#388e3c',5,1e5,0.5],['Blue','#1976d2',6,1e6,0.25],['Violet','#7b1fa2',7,1e7,0.1],
+ ['Grey','#9e9e9e',8,1e8,0.05],['White','#fafafa',9,1e9,null],['Gold','#c9a227',null,0.1,5],['Silver','#c0c0c0',null,0.01,10],
+ ['None','transparent',null,null,20]];
+let ccN=4; const ccState={4:['Yellow','Violet','Red','Gold'],5:['Brown','Black','Black','Brown','Brown']};
+function ccRoles(n){ return n===4?['1st digit','2nd digit','Multiplier','Tolerance']:['1st digit','2nd digit','3rd digit','Multiplier','Tolerance']; }
+function ccOpts(role){
+  return COL.filter(c=> role.includes('digit')?c[2]!==null : role==='Multiplier'?c[3]!==null : c[4]!==null);
+}
+function ccBuild(){
+  const roles=ccRoles(ccN);
+  $('cc-sel').innerHTML = roles.map((r,i)=>`<label>${r}</label><select data-i="${i}">${
+    ccOpts(r).map(c=>`<option${c[0]===ccState[ccN][i]?' selected':''}>${c[0]}</option>`).join('')}</select>`).join('');
+  $('cc-sel').querySelectorAll('select').forEach(s=>s.addEventListener('input',()=>{ ccState[ccN][+s.dataset.i]=s.value; cc(); }));
+  cc();
+}
+function cc(){
+  const c=n=>COL.find(x=>x[0]===n), st=ccState[ccN];
+  const digits=st.slice(0,ccN-2).map(n=>c(n)[2]).join('');
+  const mult=c(st[ccN-2])[3], tol=c(st[ccN-1])[4];
+  const R=parseInt(digits,10)*mult;
+  const body=st.map((n,i)=>`${i===ccN-1?'<div class="gap"></div>':''}<div class="band" style="background:${c(n)[1]};${n==='None'?'':''}"></div>`).join('');
+  document.querySelector('#cc-pic .body').innerHTML=body;
+  $('cc-out').innerHTML = res(eng(R,'Ω'),`±${tol}%`,'main')
+    + res(`${eng(R*(1-tol/100),'Ω')} – ${eng(R*(1+tol/100),'Ω')}`,'acceptable range');
+}
+document.querySelectorAll('#cc-n button').forEach(b=>b.addEventListener('click',()=>{
+  ccN=+b.dataset.n; document.querySelectorAll('#cc-n button').forEach(x=>x.classList.toggle('on',x===b)); ccBuild();
+}));
+
+/* ---------- AC ---------- */
+function ac(){
+  const opt=id=>{ const s=$(id).value.trim(); return s===''?null:parseSI(s); };
+  const f=opt('a-f'), R=opt('a-r')??0, L=opt('a-l'), C=opt('a-c'), V=opt('a-v');
+  if(!(f>0)) return $('a-out').innerHTML=warn('Enter a frequency greater than 0.');
+  if([R,L,C,V].some(x=>x!==null&&!(isFinite(x)&&x>=0))) return $('a-out').innerHTML=warn("Can't read one of the values. Use numbers like 30, 20m or 10u.");
+  if(L===null&&C===null&&!R) return $('a-out').innerHTML=warn('Enter at least R, L or C.');
+  const w=2*Math.PI*f;
+  const XL = L? w*L : 0, XC = C? 1/(w*C) : 0;
+  const X=XL-XC, Z=Math.hypot(R,X);
+  const th=Math.atan2(X,R)*180/Math.PI, pf=R/Z;
+  let h='';
+  if(L) h+=res(eng(XL,'Ω'),'inductive reactance X<sub>L</sub>');
+  if(C) h+=res(eng(XC,'Ω'),'capacitive reactance X<sub>C</sub>');
+  h+=res(eng(Z,'Ω'),'impedance Z','main');
+  h+=res(th.toFixed(1)+'°', X>0?'phase: current lags (inductive)':X<0?'phase: current leads (capacitive)':'in phase (resistive)');
+  h+=res(pf.toFixed(3),'power factor');
+  if(L&&C) h+=res(eng(1/(2*Math.PI*Math.sqrt(L*C)),'Hz'),'resonant frequency f₀');
+  if(V){ const I=V/Z;
+    h+=res(eng(I,'A'),'current','main')
+     +res(eng(I*I*R,'W'),'true power')
+     +res(eng(V*I,'VA'),'apparent power')
+     +res(eng(I*I*X,'VAR'),'reactive power');
+  }
+  $('a-out').innerHTML=h;
+}
+['a-f','a-r','a-l','a-c','a-v'].forEach(i=>$(i).addEventListener('input',ac));
+
+/* offline support */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+
+/* init */
+ohm(); sp(); drop(); ccBuild(); ac();
+</script>
+</body>
+</html>
