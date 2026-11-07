@@ -194,7 +194,7 @@
 </section>
 
 </main>
-<footer>Study and quick-reference aid. Use the aircraft maintenance manual, wiring diagrams and AC 43.13-1B for real work.<br><a href="../">Shop Math</a></footer>
+<footer>Study and quick-reference aid. Use the aircraft maintenance manual, wiring diagrams and AC 43.13-1B for real work.<br><a href="../">Shop Math</a><br><span style="opacity:.6">electrical-v3</span></footer>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -391,7 +391,7 @@ document.querySelectorAll('.chips').forEach(row=>{
 
 /* offline support */
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{}));
 }
 
 /* init */
