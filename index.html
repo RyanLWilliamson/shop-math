@@ -62,6 +62,7 @@
   <button data-t="ext">Extension</button>
   <button data-t="frac">Fractions</button>
   <button data-t="bend">Bend</button>
+  <button data-t="rivet">Rivets</button>
   <button data-t="conv">Convert</button>
 </nav>
 <main>
@@ -152,6 +153,41 @@
   </div>
 </section>
 
+<!-- RIVET LAYOUT -->
+<section id="rivet">
+  <div class="card">
+    <h2>Rivet pitch</h2>
+    <div class="row">
+      <div><label>Rivet diameter</label>
+        <select id="rv-d">
+          <option value="3">3/32" (-3)</option>
+          <option value="4" selected>1/8" (-4)</option>
+          <option value="5">5/32" (-5)</option>
+          <option value="6">3/16" (-6)</option>
+          <option value="8">1/4" (-8)</option>
+        </select></div>
+      <div><label>Multiplier (× D)</label><input id="rv-m" type="number" inputmode="decimal" value="4"></div>
+    </div>
+    <div class="out" id="rv-out"></div>
+  </div>
+  <div class="card">
+    <h2>Lay out a row</h2>
+    <label>Row length, edge to edge of the part (in)</label>
+    <input id="rv-l" type="number" inputmode="decimal" value="6">
+    <div class="row">
+      <div><label>Edge distance (× D)</label><input id="rv-e" type="number" inputmode="decimal" value="2.5"></div>
+      <div><label>Spacing</label>
+        <select id="rv-mode"><option value="even">Even</option><option value="exact">Exact pitch</option></select></div>
+    </div>
+    <div class="out" id="rv-row"></div>
+  </div>
+  <div class="card">
+    <h2>Rules of thumb</h2>
+    <div class="out" id="rv-ref"></div>
+    <p class="note">General layout guidance from the FAA Airframe handbook (FAA-H-8083-31). The aircraft's SRM or the original rivet pattern always takes priority.</p>
+  </div>
+</section>
+
 <!-- CONVERSIONS -->
 <section id="conv">
   <div class="card">
@@ -167,7 +203,7 @@
 </section>
 
 </main>
-<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v3</span></footer>
+<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v4</span></footer>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -270,6 +306,48 @@ function bend(){
 }
 ['bd-t','bd-r','bd-a','bd-la','bd-lb'].forEach(i=>$(i).addEventListener('input',bend));
 
+/* ---------- rivets ---------- */
+function rivet(){
+  const n32=+$('rv-d').value, D=n32/32, m=num('rv-m');
+  const in64 = x => fracStr(Math.round(x*64),64)+'"';
+  if(!(m>0)){ $('rv-out').innerHTML=`<div class="note warn">Enter a multiplier greater than 0.</div>`; }
+  else {
+    const P=D*m;
+    let flag='';
+    if(m<3) flag='<div class="note warn">Under 3D: closer than the minimum rivet pitch.</div>';
+    else if(m>10) flag='<div class="note warn">Over 10D: wider than the usual maximum pitch.</div>';
+    $('rv-out').innerHTML = res(fmt(P,4)+'"','center to center',true)
+      + res('≈ '+in64(P),'nearest 1/64')
+      + res(fmt(P*25.4,2),'mm')
+      + res(fmt(P*0.75,4)+'"','row-to-row spacing (75% of pitch)') + flag;
+  }
+  // row layout
+  const L=num('rv-l'), E=D*num('rv-e'), P=D*m, avail=L-2*E;
+  let r='';
+  if(!(L>0) || !(P>0) || !(E>=0)) r='<div class="note warn">Enter a row length, edge distance and multiplier.</div>';
+  else if(avail<0) r='<div class="note warn">The part is too short for that edge distance.</div>';
+  else if($('rv-mode').value==='even'){
+    const n=Math.max(2,Math.ceil(avail/P-1e-9)+1), s=avail/(n-1);
+    r = res(n,'rivets',true) + res(fmt(s,4)+'" ≈ '+in64(s),'actual spacing ('+fmt(s/D,2)+'D)',true)
+      + res(fmt(E,4)+'" ≈ '+in64(E),'first and last rivet from each edge');
+    if(s/D<3) r+='<div class="note warn">Spacing is under 3D. Use fewer rivets or a longer row.</div>';
+  } else {
+    const n=Math.floor(avail/P+1e-9)+1, used=(n-1)*P, end=E+(avail-used)/2;
+    r = res(n,'rivets',true) + res(fmt(P,4)+'" ≈ '+in64(P),'spacing')
+      + res(fmt(end,4)+'" ≈ '+in64(end),'first and last rivet from each edge (centered)');
+    if(end>4*D) r+='<div class="note warn">End distance is over 4D. Consider even spacing instead.</div>';
+  }
+  $('rv-row').innerHTML=r;
+  $('rv-ref').innerHTML =
+      res(fmt(3*D,4)+'"','minimum pitch (3D)')
+    + res(fmt(6*D,3)+'" – '+fmt(8*D,3)+'"','typical pitch (6–8D)')
+    + res(fmt(2.5*D,4)+'"','minimum row-to-row spacing (2.5D)')
+    + res(fmt(2*D,4)+'"','minimum edge distance, protruding head (2D)')
+    + res(fmt(2.5*D,4)+'"','minimum edge distance, countersunk (2.5D)')
+    + res(fmt(4*D,4)+'"','maximum edge distance (4D)');
+}
+['rv-d','rv-m','rv-l','rv-e','rv-mode'].forEach(i=>$(i).addEventListener('input',rivet));
+
 /* ---------- conversions ---------- */
 const CV = [
   ['Length','in','mm', x=>x*25.4, x=>x/25.4],
@@ -306,7 +384,7 @@ if ('serviceWorker' in navigator) {
 }
 
 /* init */
-torque(); ext(); dec2frac(); frac2dec(); bend(); cvSetup();
+torque(); ext(); dec2frac(); frac2dec(); bend(); rivet(); cvSetup();
 </script>
 </body>
 </html>
