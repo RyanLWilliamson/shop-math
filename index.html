@@ -174,7 +174,7 @@
         </select></div>
     </div>
     <div class="out" id="rv-sum"></div>
-    <p class="note">Filled in at the 8083 minimums. Change any multiplier below to space them wider.</p>
+    <p class="note">Filled in at the 8083 minimums, with edge distance set back far enough for an oversize repair. Change any multiplier below to space them wider.</p>
 
     <label>Pitch: center to center, same row (× D)</label>
     <input id="rv-m" type="number" inputmode="decimal" value="3.5">
@@ -182,6 +182,11 @@
 
     <label>Edge distance: rivet center to edge (× D)</label>
     <input id="rv-e" type="number" inputmode="decimal" value="2">
+    <label>Room for an oversize repair</label>
+    <select id="rv-os">
+      <option value="1" selected>Yes, use next size up (+1/32")</option>
+      <option value="0">No, use rivet diameter</option>
+    </select>
     <div class="out" id="rv-ed"></div>
 
     <label>Transverse pitch: between rows (× D)</label>
@@ -230,7 +235,7 @@
 </section>
 
 </main>
-<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v6</span></footer>
+<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v7</span></footer>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -338,7 +343,7 @@ const RV_DRILL={3:['#40','0.098'],4:['#30','0.1285'],5:['#21','0.159'],6:['#11',
 const rvMin = () => ({ pitch: $('rv-h').value==='f'?4:3.5, edge:2, trans:2.5 });
 function rvReset(){ const k=rvMin(); $('rv-m').value=k.pitch; $('rv-e').value=k.edge; $('rv-t').value=k.trans; rivet(); }
 function rivet(){
-  const n32=+$('rv-d').value, D=n32/32, m=num('rv-m'), e=num('rv-e'), t=num('rv-t'), k=rvMin();
+  const n32=+$('rv-d').value, D=n32/32, os=$('rv-os').value==='1', De=os?D+1/32:D, m=num('rv-m'), e=num('rv-e'), t=num('rv-t'), k=rvMin();
   const head = $('rv-h').value==='f' ? 'flush' : 'protruding';
   const in64 = x => fracStr(Math.round(x*64),64)+'"';
   const W = s => `<div class="note warn">${s}</div>`;
@@ -347,14 +352,15 @@ function rivet(){
 
   // summary: all three at a glance
   $('rv-sum').innerHTML = (ok(m)&&ok(e)&&ok(t))
-    ? res(fmt(D*m,4)+'"','pitch ('+fmt(m,2)+'D)',true)+res(fmt(D*e,4)+'"','edge distance ('+fmt(e,2)+'D)',true)+res(fmt(D*t,4)+'"','transverse pitch ('+fmt(t,2)+'D)',true)
+    ? res(fmt(D*m,4)+'"','pitch ('+fmt(m,2)+'D)',true)+res(fmt(De*e,4)+'"','edge distance ('+fmt(e,2)+(os?' × next size up)':'D)'),true)+res(fmt(D*t,4)+'"','transverse pitch ('+fmt(t,2)+'D)',true)
     : '';
 
   let s = ok(m) ? one(D*m,'pitch') : W('Enter a multiplier greater than 0.');
   if(ok(m) && m<k.pitch) s+=W(`Under ${k.pitch}D: tighter than the minimum for ${head}-head rivets.`);
   $('rv-p').innerHTML=s;
 
-  s = ok(e) ? one(D*e,'edge distance') : W('Enter a multiplier greater than 0.');
+  s = ok(e) ? one(De*e, os ? `oversize-ready (${fmt(e,2)} × ${fracStr(n32+1,32)}")` : 'edge distance') : W('Enter a multiplier greater than 0.');
+  if(ok(e) && os) s+=res(fmt(D*e,4)+'"',`minimum for the ${fracStr(n32,32)}" rivet itself — you're ${fmt((De-D)*e,4)}" past it`);
   if(ok(e) && e<k.edge) s+=W('Under 2D: less than the minimum edge distance.');
   $('rv-ed').innerHTML=s;
 
@@ -374,7 +380,7 @@ function rivet(){
   $('rv-det').innerHTML=d;
 
   // row layout
-  const L=num('rv-l'), E=D*e, P=D*m, avail=L-2*E;
+  const L=num('rv-l'), E=De*e, P=D*m, avail=L-2*E;
   let r='';
   if(!(L>0) || !ok(m) || !ok(e)) r=W('Enter a row length, pitch and edge distance.');
   else if(avail<0) r=W('The part is too short for that edge distance.');
@@ -396,7 +402,7 @@ function rivet(){
     + res(fmt(2*D,4)+'"','min edge distance (2D)')
     + res(fmt(2.5*D,4)+'"','min distance between rows (2.5D)');
 }
-['rv-d','rv-m','rv-e','rv-t','rv-g','rv-l','rv-mode'].forEach(i=>$(i).addEventListener('input',rivet));
+['rv-d','rv-m','rv-e','rv-os','rv-t','rv-g','rv-l','rv-mode'].forEach(i=>$(i).addEventListener('input',rivet));
 $('rv-h').addEventListener('input',()=>{ $('rv-m').value=rvMin().pitch; rivet(); });
 $('rv-reset').addEventListener('click',rvReset);
 
