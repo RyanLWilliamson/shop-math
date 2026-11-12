@@ -195,10 +195,10 @@
 
     <label>Edge distance: rivet center to edge (× D)</label>
     <input id="rv-e" type="number" inputmode="decimal" value="2">
-    <label>Room for an oversize repair</label>
+    <label>Edge spacing</label>
     <select id="rv-os">
-      <option value="1">Yes, use next size up (+1/32")</option>
-      <option value="0" selected>No, use rivet diameter</option>
+      <option value="0" selected>Minimum</option>
+      <option value="1">Preferred (+1/16")</option>
     </select>
     <div class="out" id="rv-ed"></div>
 
@@ -227,7 +227,7 @@
   </div>
 
   <div class="card">
-    <h2>8083 spacing table</h2>
+    <h2>8083 spacing tables</h2>
     <div class="out" id="rv-ref"></div>
     <p class="note">From FAA-H-8083-31. The aircraft's SRM or the original rivet pattern always takes priority.</p>
   </div>
@@ -248,7 +248,7 @@
 </section>
 
 </main>
-<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v9</span></footer>
+<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v10</span></footer>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -354,10 +354,10 @@ function bend(){
 /* ---------- rivets ---------- */
 const RV_DRILL={3:['#40','0.098'],4:['#30','0.1285'],5:['#21','0.159'],6:['#11','0.191'],8:['F','0.257']};
 // FAA-H-8083-31 rivet spacing table: 1 and 3 rows / 2 rows, protruding / countersunk
-const rvMin = () => { const f=$('rv-h').value==='f', two=$('rv-r').value==='2'; return { pitch:(f?3.5:3)+(two?1:0), edge:2, trans:2.5 }; };
+const rvMin = () => { const f=$('rv-h').value==='f', two=$('rv-r').value==='2'; return { pitch:(f?3.5:3)+(two?1:0), edge:f?2.5:2, trans:2.5 }; };
 function rvReset(){ const k=rvMin(); $('rv-m').value=k.pitch; $('rv-e').value=k.edge; $('rv-t').value=k.trans; rivet(); }
 function rivet(){
-  const n32=+$('rv-d').value, D=n32/32, pref=$('rv-pref').value==='1', add=pref?1/16:0, os=$('rv-os').value==='1', De=os?D+1/32:D, m=num('rv-m'), e=num('rv-e'), t=num('rv-t'), k=rvMin();
+  const n32=+$('rv-d').value, D=n32/32, pref=$('rv-pref').value==='1', add=pref?1/16:0, os=$('rv-os').value==='1', addE=os?1/16:0, m=num('rv-m'), e=num('rv-e'), t=num('rv-t'), k=rvMin();
   const head = ($('rv-h').value==='f' ? 'countersunk' : 'protruding')+', '+$('rv-r').value+(+$('rv-r').value>1?' rows':' row');
   const Pm = D*m+add;
   const in64 = x => fracStr(Math.round(x*64),64)+'"';
@@ -367,16 +367,15 @@ function rivet(){
 
   // summary: all three at a glance
   $('rv-sum').innerHTML = (ok(m)&&ok(e)&&ok(t))
-    ? res(fmt(Pm,4)+'"','pitch ('+fmt(m,2)+'D'+(pref?' + 1/16"':'')+')',true)+res(fmt(De*e,4)+'"','edge distance ('+fmt(e,2)+(os?' × next size up)':'D)'),true)+res(fmt(D*t,4)+'"','transverse pitch ('+fmt(t,2)+'D)',true)
+    ? res(fmt(Pm,4)+'"','pitch ('+fmt(m,2)+'D'+(pref?' + 1/16"':'')+')',true)+res(fmt(D*e+addE,4)+'"','edge distance ('+fmt(e,2)+'D'+(os?' + 1/16"':'')+')',true)+res(fmt(D*t,4)+'"','transverse pitch ('+fmt(t,2)+'D)',true)
     : '';
 
   let s = ok(m) ? one(Pm, pref?'pitch, preferred ('+fmt(m,2)+'D + 1/16")':'pitch') : W('Enter a multiplier greater than 0.');
   if(ok(m) && m<k.pitch) s+=W(`Under ${k.pitch}D: tighter than the minimum for ${head}.`);
   $('rv-p').innerHTML=s;
 
-  s = ok(e) ? one(De*e, os ? `oversize-ready (${fmt(e,2)} × ${fracStr(n32+1,32)}")` : 'edge distance') : W('Enter a multiplier greater than 0.');
-  if(ok(e) && os) s+=res(fmt(D*e,4)+'"',`minimum for the ${fracStr(n32,32)}" rivet itself — you're ${fmt((De-D)*e,4)}" past it`);
-  if(ok(e) && e<k.edge) s+=W('Under 2D: less than the minimum edge distance.');
+  s = ok(e) ? one(D*e+addE, os ? `edge distance, preferred (${fmt(e,2)}D + 1/16")` : 'edge distance') : W('Enter a multiplier greater than 0.');
+  if(ok(e) && e<k.edge) s+=W(`Under ${k.edge}D: less than the minimum edge distance for ${$('rv-h').value==='f'?'countersunk':'protruding head'} rivets.`);
   $('rv-ed').innerHTML=s;
 
   s = ok(t) ? one(D*t,'transverse pitch') : W('Enter a multiplier greater than 0.');
@@ -395,7 +394,7 @@ function rivet(){
   $('rv-det').innerHTML=d;
 
   // row layout
-  const L=num('rv-l'), E=De*e, P=Pm, avail=L-2*E;
+  const L=num('rv-l'), E=D*e+addE, P=Pm, avail=L-2*E;
   let r='';
   if(!(L>0) || !ok(m) || !ok(e)) r=W('Enter a row length, pitch and edge distance.');
   else if(avail<0) r=W('The part is too short for that edge distance.');
@@ -416,11 +415,13 @@ function rivet(){
       '<div class="note" style="margin:0">Pitch: minimum / preferred (+1/16")</div>'
     + row('protruding, 1 or 3 rows',3) + row('protruding, 2 rows',4)
     + row('countersunk, 1 or 3 rows',3.5) + row('countersunk, 2 rows',4.5)
-    + res(fmt(2*D,4)+'"','min edge distance (2D)')
+    + '<div class="note" style="margin:6px 0 0">Edge distance: minimum / preferred (+1/16")</div>'
+    + row('protruding head',2) + row('countersunk',2.5)
     + res(fmt(2.5*D,4)+'"','min distance between rows (2.5D)');
 }
 ['rv-d','rv-m','rv-e','rv-os','rv-t','rv-g','rv-l','rv-mode'].forEach(i=>$(i).addEventListener('input',rivet));
-['rv-h','rv-r'].forEach(i=>$(i).addEventListener('input',()=>{ $('rv-m').value=rvMin().pitch; rivet(); }));
+$('rv-r').addEventListener('input',()=>{ $('rv-m').value=rvMin().pitch; rivet(); });
+$('rv-h').addEventListener('input',()=>{ const k=rvMin(); $('rv-m').value=k.pitch; $('rv-e').value=k.edge; rivet(); });
 $('rv-pref').addEventListener('input',rivet);
 $('rv-reset').addEventListener('click',rvReset);
 
