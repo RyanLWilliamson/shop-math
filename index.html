@@ -170,14 +170,27 @@
       <div><label>Head</label>
         <select id="rv-h">
           <option value="p">Protruding</option>
-          <option value="f">Flush</option>
+          <option value="f">Countersunk</option>
+        </select></div>
+    </div>
+    <div class="row">
+      <div><label>Rows</label>
+        <select id="rv-r">
+          <option value="1" selected>1 row</option>
+          <option value="2">2 rows</option>
+          <option value="3">3 rows</option>
+        </select></div>
+      <div><label>Pitch spacing</label>
+        <select id="rv-pref">
+          <option value="0" selected>Minimum</option>
+          <option value="1">Preferred (+1/16")</option>
         </select></div>
     </div>
     <div class="out" id="rv-sum"></div>
     <p class="note">Filled in at the 8083 minimums. Change any multiplier below to space them wider.</p>
 
     <label>Pitch: center to center, same row (× D)</label>
-    <input id="rv-m" type="number" inputmode="decimal" value="3.5">
+    <input id="rv-m" type="number" inputmode="decimal" value="3">
     <div class="out" id="rv-p"></div>
 
     <label>Edge distance: rivet center to edge (× D)</label>
@@ -214,7 +227,7 @@
   </div>
 
   <div class="card">
-    <h2>8083 minimums</h2>
+    <h2>8083 spacing table</h2>
     <div class="out" id="rv-ref"></div>
     <p class="note">From FAA-H-8083-31. The aircraft's SRM or the original rivet pattern always takes priority.</p>
   </div>
@@ -235,7 +248,7 @@
 </section>
 
 </main>
-<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v8</span></footer>
+<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v9</span></footer>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -340,11 +353,13 @@ function bend(){
 
 /* ---------- rivets ---------- */
 const RV_DRILL={3:['#40','0.098'],4:['#30','0.1285'],5:['#21','0.159'],6:['#11','0.191'],8:['F','0.257']};
-const rvMin = () => ({ pitch: $('rv-h').value==='f'?4:3.5, edge:2, trans:2.5 });
+// FAA-H-8083-31 rivet spacing table: 1 and 3 rows / 2 rows, protruding / countersunk
+const rvMin = () => { const f=$('rv-h').value==='f', two=$('rv-r').value==='2'; return { pitch:(f?3.5:3)+(two?1:0), edge:2, trans:2.5 }; };
 function rvReset(){ const k=rvMin(); $('rv-m').value=k.pitch; $('rv-e').value=k.edge; $('rv-t').value=k.trans; rivet(); }
 function rivet(){
-  const n32=+$('rv-d').value, D=n32/32, os=$('rv-os').value==='1', De=os?D+1/32:D, m=num('rv-m'), e=num('rv-e'), t=num('rv-t'), k=rvMin();
-  const head = $('rv-h').value==='f' ? 'flush' : 'protruding';
+  const n32=+$('rv-d').value, D=n32/32, pref=$('rv-pref').value==='1', add=pref?1/16:0, os=$('rv-os').value==='1', De=os?D+1/32:D, m=num('rv-m'), e=num('rv-e'), t=num('rv-t'), k=rvMin();
+  const head = ($('rv-h').value==='f' ? 'countersunk' : 'protruding')+', '+$('rv-r').value+(+$('rv-r').value>1?' rows':' row');
+  const Pm = D*m+add;
   const in64 = x => fracStr(Math.round(x*64),64)+'"';
   const W = s => `<div class="note warn">${s}</div>`;
   const one = (x,lab) => res(fmt(x,4)+'"', lab+'<br>≈ '+in64(x)+' · '+fmt(x*25.4,2)+' mm', true);
@@ -352,11 +367,11 @@ function rivet(){
 
   // summary: all three at a glance
   $('rv-sum').innerHTML = (ok(m)&&ok(e)&&ok(t))
-    ? res(fmt(D*m,4)+'"','pitch ('+fmt(m,2)+'D)',true)+res(fmt(De*e,4)+'"','edge distance ('+fmt(e,2)+(os?' × next size up)':'D)'),true)+res(fmt(D*t,4)+'"','transverse pitch ('+fmt(t,2)+'D)',true)
+    ? res(fmt(Pm,4)+'"','pitch ('+fmt(m,2)+'D'+(pref?' + 1/16"':'')+')',true)+res(fmt(De*e,4)+'"','edge distance ('+fmt(e,2)+(os?' × next size up)':'D)'),true)+res(fmt(D*t,4)+'"','transverse pitch ('+fmt(t,2)+'D)',true)
     : '';
 
-  let s = ok(m) ? one(D*m,'pitch') : W('Enter a multiplier greater than 0.');
-  if(ok(m) && m<k.pitch) s+=W(`Under ${k.pitch}D: tighter than the minimum for ${head}-head rivets.`);
+  let s = ok(m) ? one(Pm, pref?'pitch, preferred ('+fmt(m,2)+'D + 1/16")':'pitch') : W('Enter a multiplier greater than 0.');
+  if(ok(m) && m<k.pitch) s+=W(`Under ${k.pitch}D: tighter than the minimum for ${head}.`);
   $('rv-p').innerHTML=s;
 
   s = ok(e) ? one(De*e, os ? `oversize-ready (${fmt(e,2)} × ${fracStr(n32+1,32)}")` : 'edge distance') : W('Enter a multiplier greater than 0.');
@@ -380,7 +395,7 @@ function rivet(){
   $('rv-det').innerHTML=d;
 
   // row layout
-  const L=num('rv-l'), E=De*e, P=D*m, avail=L-2*E;
+  const L=num('rv-l'), E=De*e, P=Pm, avail=L-2*E;
   let r='';
   if(!(L>0) || !ok(m) || !ok(e)) r=W('Enter a row length, pitch and edge distance.');
   else if(avail<0) r=W('The part is too short for that edge distance.');
@@ -396,14 +411,17 @@ function rivet(){
   }
   $('rv-row').innerHTML=r;
 
+  const f16=1/16, row=(lab,mult)=>res(fmt(mult*D,4)+'" / '+fmt(mult*D+f16,4)+'"', lab+' ('+fmt(mult,1)+'D)');
   $('rv-ref').innerHTML =
-      res(fmt(3.5*D,4)+'"','min pitch, protruding head (3.5D)')
-    + res(fmt(4*D,4)+'"','min pitch, flush head (4D)')
+      '<div class="note" style="margin:0">Pitch: minimum / preferred (+1/16")</div>'
+    + row('protruding, 1 or 3 rows',3) + row('protruding, 2 rows',4)
+    + row('countersunk, 1 or 3 rows',3.5) + row('countersunk, 2 rows',4.5)
     + res(fmt(2*D,4)+'"','min edge distance (2D)')
     + res(fmt(2.5*D,4)+'"','min distance between rows (2.5D)');
 }
 ['rv-d','rv-m','rv-e','rv-os','rv-t','rv-g','rv-l','rv-mode'].forEach(i=>$(i).addEventListener('input',rivet));
-$('rv-h').addEventListener('input',()=>{ $('rv-m').value=rvMin().pitch; rivet(); });
+['rv-h','rv-r'].forEach(i=>$(i).addEventListener('input',()=>{ $('rv-m').value=rvMin().pitch; rivet(); }));
+$('rv-pref').addEventListener('input',rivet);
 $('rv-reset').addEventListener('click',rvReset);
 
 /* ---------- conversions ---------- */
