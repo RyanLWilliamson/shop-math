@@ -174,7 +174,7 @@
         </select></div>
     </div>
     <div class="out" id="rv-sum"></div>
-    <p class="note">Filled in at the 8083 minimums, with edge distance set back far enough for an oversize repair. Change any multiplier below to space them wider.</p>
+    <p class="note">Filled in at the 8083 minimums. Change any multiplier below to space them wider.</p>
 
     <label>Pitch: center to center, same row (× D)</label>
     <input id="rv-m" type="number" inputmode="decimal" value="3.5">
@@ -184,8 +184,8 @@
     <input id="rv-e" type="number" inputmode="decimal" value="2">
     <label>Room for an oversize repair</label>
     <select id="rv-os">
-      <option value="1" selected>Yes, use next size up (+1/32")</option>
-      <option value="0">No, use rivet diameter</option>
+      <option value="1">Yes, use next size up (+1/32")</option>
+      <option value="0" selected>No, use rivet diameter</option>
     </select>
     <div class="out" id="rv-ed"></div>
 
@@ -235,7 +235,7 @@
 </section>
 
 </main>
-<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v7</span></footer>
+<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v8</span></footer>
 
 <script>
 const $ = id => document.getElementById(id);

@@ -1,5 +1,5 @@
 // Bump VERSION whenever you change any file.
-const VERSION = 'shop-math-v7';
+const VERSION = 'shop-math-v8';
 const FILES = ['./', './index.html', './manifest.json', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
