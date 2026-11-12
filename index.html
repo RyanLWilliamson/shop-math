@@ -159,6 +159,11 @@
 <section id="rivet">
   <div class="card">
     <h2>Rivet layout</h2>
+    <label>Standard</label>
+    <select id="rv-std">
+      <option value="8083" selected>FAA-H-8083-31 (textbook)</option>
+      <option value="ac">AC 43.13-1B (Figure 4-5)</option>
+    </select>
     <div class="row">
       <div><label>Rivet diameter (D)</label>
         <select id="rv-d">
@@ -179,7 +184,7 @@
         <select id="rv-r">
           <option value="1" selected>1 row</option>
           <option value="2">2 rows</option>
-          <option value="3">3 rows</option>
+          <option value="3">3 or more rows</option>
         </select></div>
       <div><label>Pitch spacing</label>
         <select id="rv-pref">
@@ -218,6 +223,9 @@
     <h2>Rivet details</h2>
     <label>Total thickness of the sheets being joined, grip (in)</label>
     <input id="rv-g" type="number" inputmode="decimal" value="0.064">
+    <label>Thicker sheet thickness (in), for choosing rivet diameter</label>
+    <input id="rv-ts" type="number" inputmode="decimal" value="0.040">
+    <div class="out" id="rv-dsug"></div>
     <label>Rivet alloy</label>
     <select id="rv-al">
       <option value="a" selected>A, AD, B, DD</option>
@@ -237,7 +245,7 @@
   </div>
 
   <div class="card">
-    <h2>8083 spacing tables</h2>
+    <h2>Spacing tables</h2>
     <div class="out" id="rv-ref"></div>
     <p class="note">From FAA-H-8083-31. The aircraft's SRM or the original rivet pattern always takes priority.</p>
   </div>
@@ -258,7 +266,7 @@
 </section>
 
 </main>
-<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v12</span></footer>
+<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v13</span></footer>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -364,7 +372,16 @@ function bend(){
 /* ---------- rivets ---------- */
 const RV_DRILL={3:['#40','0.098'],4:['#30','0.1285'],5:['#21','0.159'],6:['#11','0.191'],8:['F','0.257']};
 // FAA-H-8083-31 rivet spacing table: 1 and 3 rows / 2 rows, protruding / countersunk
-const rvMin = () => { const f=$('rv-h').value==='f', two=$('rv-r').value==='2'; return { pitch:(f?3.5:3)+(two?1:0), edge:f?2.5:2, trans:Math.max(2.5, +(0.75*((f?3.5:3)+(two?1:0))).toFixed(3)) }; };
+const rvMin = () => {
+  const f=$('rv-h').value==='f', r=+$('rv-r').value;
+  if($('rv-std').value==='ac'){ // AC 43.13-1B par 4-58 / Fig 4-5: no head-type distinction
+    if(r===1) return { pitch:3, edge:2, trans:3, tmin:0, src:'AC 43.13-1B' };
+    if(r===2) return { pitch:4, edge:2, trans:4, tmin:4, src:'AC 43.13-1B' };
+    return { pitch:3, edge:2, trans:3, tmin:3, src:'AC 43.13-1B' };
+  }
+  const pitch=(f?3.5:3)+(r===2?1:0); // FAA-H-8083-31 spacing table
+  return { pitch, edge:f?2.5:2, trans:Math.max(2.5, +(0.75*pitch).toFixed(3)), tmin:2.5, src:'8083' };
+};
 function rvReset(){ const k=rvMin(); $('rv-m').value=k.pitch; $('rv-e').value=k.edge; $('rv-t').value=k.trans; rivet(); }
 function rivet(){
   const n32=+$('rv-d').value, D=n32/32, pref=$('rv-pref').value==='1', add=pref?1/16:0, os=$('rv-os').value==='1', addE=os?1/16:0, m=num('rv-m'), e=num('rv-e'), t=num('rv-t'), k=rvMin();
@@ -381,16 +398,17 @@ function rivet(){
     : '';
 
   let s = ok(m) ? one(Pm, pref?'pitch, preferred ('+fmt(m,2)+'D + 1/16")':'pitch') : W('Enter a multiplier greater than 0.');
-  if(ok(m) && m<k.pitch) s+=W(`Under ${k.pitch}D: tighter than the minimum for ${head}.`);
+  if(ok(m) && m<k.pitch) s+=W(`Under ${k.pitch}D: tighter than the ${k.src} minimum for ${k.src==='8083'?head:$('rv-r').value==='1'?'a single row':$('rv-r').value==='2'?'double rows':'multiple rows'}.`);
+  if(k.src!=='8083' && $('rv-r').value==='3') s+='<div class="note">Figure 4-5 (B) staggers the rows: the outer rows are 6D apart in the row, the inner rows 3D, with rows 3D apart.</div>';
   $('rv-p').innerHTML=s;
 
   s = ok(e) ? one(D*e+addE, os ? `edge distance, preferred (${fmt(e,2)}D + 1/16")` : 'edge distance') : W('Enter a multiplier greater than 0.');
-  if(ok(e) && e<k.edge) s+=W(`Under ${k.edge}D: less than the minimum edge distance for ${$('rv-h').value==='f'?'countersunk':'protruding head'} rivets.`);
+  if(ok(e) && e<k.edge) s+=W(`Under ${k.edge}D: less than the ${k.src} minimum edge distance${k.src==='8083'?' for '+($('rv-h').value==='f'?'countersunk':'protruding head')+' rivets':''}.`);
   $('rv-ed').innerHTML=s;
 
   s = ok(t) ? one(D*t,'transverse pitch') : W('Enter a multiplier greater than 0.');
-  if(ok(t) && ok(m)) s+=res(fmt(D*t/Pm*100,0)+'%','of rivet pitch (usually 75%)');
-  if(ok(t) && t<2.5) s+=W('Under 2.5D: rows closer than the smallest allowable transverse pitch.');
+  if(ok(t) && ok(m)) s+=res(fmt(D*t/Pm*100,0)+'%', k.src==='8083'?'of rivet pitch (usually 75%)':'of rivet pitch');
+  if(ok(t) && k.tmin && t<k.tmin) s+=W(`Under ${k.tmin}D: rows closer than the ${k.src} minimum.`);
   if($('rv-r').value==='1') s+='<div class="note">Only matters with 2 or more rows.</div>';
   $('rv-tp').innerHTML=s;
 
@@ -399,6 +417,12 @@ function rivet(){
     a:{ prot:[1.33,1.5], head:[['minimum',1.25,0.66],['preferred',1.5,0.5],['maximum',1.66,0.33]] },
     d:{ prot:[1.25,1.33], head:[['minimum',1.25,0.66],['preferred',1.4,0.6],['maximum',1.5,0.5]] } };
   const std=RV_STD[$('rv-al').value];
+  { const ts=num('rv-ts'), sizes=[3,4,5,6,8];
+    if(ts>0){ const want=3*ts, best=sizes.reduce((a,b)=>Math.abs(b/32-want)<Math.abs(a/32-want)?b:a);
+      let o=res(fmt(want,4)+'"','3 × thicker sheet (AC 43.13-1B: D preferably about 3t)')
+        + res(fracStr(best,32)+'" (-'+best+')','closest standard diameter',true);
+      if(best!==n32) o+=`<div class="note">You've selected ${fracStr(n32,32)}" above.</div>`;
+      $('rv-dsug').innerHTML=o; } else $('rv-dsug').innerHTML=''; }
   const g=num('rv-g'), dr=RV_DRILL[n32];
   let d = res(dr[0]+' drill', dr[1]+'" — for a '+fracStr(n32,32)+'" rivet', true);
   if(g>0){
@@ -435,14 +459,20 @@ function rivet(){
     + row('countersunk, 1 or 3 rows',3.5) + row('countersunk, 2 rows',4.5)
     + '<div class="note" style="margin:6px 0 0">Edge distance: minimum / preferred (+1/16")</div>'
     + row('protruding head',2) + row('countersunk',2.5)
-    + res(fmt(2.5*D,4)+'"','min transverse pitch (2.5D); usually 75% of pitch');
+    + res(fmt(2.5*D,4)+'"','min transverse pitch (2.5D); usually 75% of pitch')
+    + '<div class="note" style="margin:10px 0 0;color:var(--accent)">AC 43.13-1B Figure 4-5 (any head)</div>'
+    + res(fmt(3*D,4)+'" · '+fmt(2*D,4)+'"','single row: pitch 3D · edge 2D')
+    + res(fmt(4*D,4)+'" · '+fmt(4*D,4)+'" · '+fmt(2*D,4)+'"','double row: pitch 4D · between rows 4D · edge 2D')
+    + res(fmt(3*D,4)+'" · '+fmt(2*D,4)+'"','3+ rows: 3D grid, staggered · edge 2D')
+    + '<div class="note">AC 43.13-1B: duplicate the original rivet spacing and edge distance unless structural deficiencies are suspected.</div>';
 }
-['rv-d','rv-m','rv-e','rv-os','rv-t','rv-g','rv-al','rv-l','rv-mode'].forEach(i=>$(i).addEventListener('input',rivet));
+['rv-d','rv-m','rv-e','rv-os','rv-t','rv-g','rv-ts','rv-al','rv-l','rv-mode'].forEach(i=>$(i).addEventListener('input',rivet));
 $('rv-r').addEventListener('input',()=>{ const k=rvMin(); $('rv-m').value=k.pitch; $('rv-t').value=k.trans; rivet(); });
+$('rv-std').addEventListener('input',()=>{ const k=rvMin(); $('rv-m').value=k.pitch; $('rv-e').value=k.edge; $('rv-t').value=k.trans; rivet(); });
 $('rv-h').addEventListener('input',()=>{ const k=rvMin(); $('rv-m').value=k.pitch; $('rv-e').value=k.edge; $('rv-t').value=k.trans; rivet(); });
 // transverse quick-sets work from the actual pitch (including +1/16" if preferred), floored at 2.5D
 function rvSetT(f){ const D=+$('rv-d').value/32, m=num('rv-m'); if(!(m>0)) return;
-  const Pm=D*m+($('rv-pref').value==='1'?1/16:0); $('rv-t').value=+Math.max(2.5,Pm*f/D).toFixed(3); rivet(); }
+  const Pm=D*m+($('rv-pref').value==='1'?1/16:0); $('rv-t').value=+Math.max(rvMin().tmin||2.5,Pm*f/D).toFixed(3); rivet(); }
 $('rv-t75').addEventListener('click',()=>rvSetT(0.75));
 $('rv-teq').addEventListener('click',()=>rvSetT(1));
 $('rv-pref').addEventListener('input',rivet);
