@@ -124,7 +124,7 @@
 <!-- WIRE VOLTAGE DROP -->
 <section id="drop">
   <div class="card">
-    <h2>Wire voltage drop (tin-plated copper)</h2>
+    <h2>Wire size check (tin-plated copper)</h2>
     <div class="row">
       <div><label>System</label>
         <select id="d-sys">
@@ -147,11 +147,17 @@
       <div><label>Wire size (AWG)</label><select id="d-awg"></select></div>
       <div><label>Conductor temp (°C)</label><input id="d-t" type="number" inputmode="decimal" value="20"></div>
     </div>
+    <label>Wire temperature rating (from the wire spec)</label>
+    <select id="d-rate">
+      <option value="0">105 °C</option>
+      <option value="1" selected>150 °C</option>
+      <option value="2">200 °C</option>
+    </select>
     <div class="out" id="d-out"></div>
     <p class="note">
       <code>Drop = I × (Ω per 1000 ft ÷ 1000) × length</code>, using AC 43.13-1B Table 11-9 resistance for tin-plated copper wire. Above 20 °C, resistance is multiplied by (234.5 + T) ÷ 254.5, the AC's copper temperature correction. Silver- or nickel-plated wire has slightly lower resistance, so these results are on the safe side.<br>
       Length means the total conductor in the circuit. Using the airframe as ground, that's the wire run. With a separate return wire, add both wires together.<br>
-      Continuous limits match Figure 11-2. Intermittent limits (Figure 11-3) are for loads of about 2 minutes or less. This checks voltage drop only. Also check current-carrying capacity (Table 11-9, bundle and altitude derating) in AC 43.13-1B chapter 11.
+      Continuous limits match Figure 11-2. Intermittent limits (Figure 11-3) are for loads of about 2 minutes or less. Current capacity uses the Table 11-9 bundle ratings: a 70 °C ambient, a large bundle (33+ wires for sizes 24–10, 9+ for 8 and larger), 20% of bundle capacity in use, at 60,000 ft. That's a worst case, so a single wire in free air or a small bundle can carry more. To get that higher rating, use Figures 11-4 to 11-6 in AC 43.13-1B chapter 11.
     </p>
   </div>
 </section>
@@ -194,7 +200,7 @@
 </section>
 
 </main>
-<footer>Study and quick-reference aid. Use the aircraft maintenance manual, wiring diagrams and AC 43.13-1B for real work.<br><a href="../">Shop Math</a><br><span style="opacity:.6">electrical-v4</span></footer>
+<footer>Study and quick-reference aid. Use the aircraft maintenance manual, wiring diagrams and AC 43.13-1B for real work.<br><a href="../">Shop Math</a><br><span style="opacity:.6">electrical-v5</span></footer>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -283,6 +289,9 @@ $('sp-v').addEventListener('input',sp);
 
 /* ---------- wire drop ---------- */
 // AC 43.13-1B Table 11-9: max resistance, ohms per 1000 ft at 20 °C, tin-plated copper (MIL-W-27759 / MIL-W-5088)
+// AC 43.13-1B Table 11-9 continuous duty amps, wires in bundles: [105 °C, 150 °C, 200 °C rated wire]
+const AMP={'24':[2.5,4,5],'22':[3,5,6],'20':[4,7,9],'18':[6,9,12],'16':[7,11,14],'14':[10,14,18],'12':[13,19,25],'10':[17,26,32],
+  '8':[38,57,71],'6':[50,76,97],'4':[68,103,133],'2':[95,141,179],'1':[113,166,210],'1/0':[128,192,243],'2/0':[147,222,285],'3/0':[172,262,335],'4/0':[204,310,395]};
 const AWG=[['24',28.40],['22',16.20],['20',9.88],['18',6.23],['16',4.81],['14',3.06],['12',2.02],['10',1.26],
   ['8',0.70],['6',0.44],['4',0.28],['2',0.18],['1',0.15],['1/0',0.12],['2/0',0.09],['3/0',0.07],['4/0',0.06]];
 // AC 43.13-1B allowable drop, bus to equipment: [continuous, intermittent]
@@ -296,15 +305,21 @@ function drop(){
   const vd=r=>I*(r/1000)*L*k;
   const r1000=AWG.find(a=>a[0]===g)[1];
   const d=vd(r1000), lim=ALLOW[sys][op==='c'?0:1], ok=d<=lim;
+  const ri=+$('d-rate').value, rlab=['105','150','200'][ri];
+  const amp=AMP[g][ri], ampOk=I<=amp;
   const best=AWG.find(([,r])=>vd(r)<=lim);
+  const both=AWG.find(([w,r])=>vd(r)<=lim && I<=AMP[w][ri]);
   let h = res(d.toFixed(3)+' V', `drop on ${g} AWG (${(d/sys*100).toFixed(1)}% of ${sys} V)`, ok?'pass':'fail')
         + res(lim+' V', `allowable, ${op==='c'?'continuous':'intermittent'}`)
-        + res(ok?'OK':'Too much drop', ok?'within limit':'use a larger wire or a shorter run', ok?'pass':'fail')
-        + res(best?best[0]+' AWG':'none listed', best?`smallest wire within limit (${vd(best[1]).toFixed(3)} V)`:'even 4/0 exceeds the limit','main')
+        + res(ok?'OK':'Too much drop', ok?'voltage drop within limit':'use a larger wire or a shorter run', ok?'pass':'fail')
+        + res(amp+' A', `${g} AWG capacity, ${rlab} °C wire in a bundle (Table 11-9)`, ampOk?'pass':'fail')
+        + res(ampOk?'OK':'Over capacity', ampOk?`${I} A load is within capacity`:`${I} A load is more than the wire can carry`, ampOk?'pass':'fail')
+        + res(both?both[0]+' AWG':'none listed', both?'smallest wire that passes both checks':'no listed wire passes both','main')
+        + (best && both && best[0]!==both[0] ? `<div class="note">Voltage drop alone would allow ${best[0]} AWG; current capacity needs ${both[0]} AWG.</div>` : '')
         + res((I*I*r1000/1000*L*k).toFixed(2)+' W','heat lost in the wire');
   $('d-out').innerHTML=h;
 }
-['d-sys','d-op','d-i','d-l','d-awg','d-t'].forEach(i=>$(i).addEventListener('input',drop));
+['d-sys','d-op','d-i','d-l','d-awg','d-t','d-rate'].forEach(i=>$(i).addEventListener('input',drop));
 
 /* ---------- color code ---------- */
 const COL=[
