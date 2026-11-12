@@ -213,8 +213,13 @@
     <h2>Rivet details</h2>
     <label>Total thickness of the sheets being joined, grip (in)</label>
     <input id="rv-g" type="number" inputmode="decimal" value="0.064">
+    <label>Rivet alloy</label>
+    <select id="rv-al">
+      <option value="a" selected>A, AD, B, DD</option>
+      <option value="d">D, E, KE, M</option>
+    </select>
     <div class="out" id="rv-det"></div>
-    <p class="note">Rivet length = grip + 1.5D. Shop head about 1.5D wide × 0.5D tall. Lengths are in 1/16" steps (the dash number after the diameter, e.g. AN470AD4-<b>5</b> = 5/16" long).</p>
+    <p class="note">From FAA-H-8083-31 Figure 4-76, Driven Rivet Standards. Rivet length = grip + predrive protrusion. Lengths come in 1/16" steps (the dash number after the diameter, e.g. MS20470AD4-<b>5</b> = 5/16" long).</p>
   </div>
 
   <div class="card">
@@ -248,7 +253,7 @@
 </section>
 
 </main>
-<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v10</span></footer>
+<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v11</span></footer>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -382,15 +387,21 @@ function rivet(){
   if(ok(t) && t<k.trans) s+=W('Under 2.5D: rows closer than the minimum.');
   $('rv-tp').innerHTML=s;
 
-  // details
+  // details: FAA-H-8083-31 Fig 4-76
+  const RV_STD = {
+    a:{ prot:[1.33,1.5], head:[['minimum',1.25,0.66],['preferred',1.5,0.5],['maximum',1.66,0.33]] },
+    d:{ prot:[1.25,1.33], head:[['minimum',1.25,0.66],['preferred',1.4,0.6],['maximum',1.5,0.5]] } };
+  const std=RV_STD[$('rv-al').value];
   const g=num('rv-g'), dr=RV_DRILL[n32];
   let d = res(dr[0]+' drill', dr[1]+'" — for a '+fracStr(n32,32)+'" rivet', true);
   if(g>0){
-    const len=g+1.5*D, dash=Math.ceil(len*16-1e-9);
-    d += res(fmt(len,4)+'"','rivet length needed (grip + 1.5D)')
-       + res('-'+dash+' ('+fracStr(dash,16)+'")','shortest standard length that works',true);
+    const lo=g+std.prot[0]*D, hi=g+std.prot[1]*D, dash=Math.ceil(lo*16-1e-9), L16=dash/16;
+    d += res(fmt(lo,4)+'" – '+fmt(hi,4)+'"',`length needed (grip + ${std.prot[0]}D to ${std.prot[1]}D)`)
+       + res('-'+dash+' ('+fracStr(dash,16)+'")','shortest standard length',true);
+    if(L16>hi+1e-9) d += W(`That's ${fmt(L16-hi,4)}" longer than the ${std.prot[1]}D maximum protrusion. Trim it to ${fmt(hi,4)}" (≈ ${fracStr(Math.round(hi*64),64)}") before driving.`);
   } else d += W('Enter the grip thickness for rivet length.');
-  d += res(fmt(1.5*D,4)+'" × '+fmt(0.5*D,4)+'"','shop head, width × height');
+  d += '<div class="note" style="margin:6px 0 0">Shop head (formed head), width × height</div>';
+  std.head.forEach(([lab,w,ht])=>{ d += res(fmt(w*D,4)+'" × '+fmt(ht*D,4)+'"', `${lab} (${w}D × ${ht}D)`, lab==='preferred'); });
   $('rv-det').innerHTML=d;
 
   // row layout
@@ -419,7 +430,7 @@ function rivet(){
     + row('protruding head',2) + row('countersunk',2.5)
     + res(fmt(2.5*D,4)+'"','min distance between rows (2.5D)');
 }
-['rv-d','rv-m','rv-e','rv-os','rv-t','rv-g','rv-l','rv-mode'].forEach(i=>$(i).addEventListener('input',rivet));
+['rv-d','rv-m','rv-e','rv-os','rv-t','rv-g','rv-al','rv-l','rv-mode'].forEach(i=>$(i).addEventListener('input',rivet));
 $('rv-r').addEventListener('input',()=>{ $('rv-m').value=rvMin().pitch; rivet(); });
 $('rv-h').addEventListener('input',()=>{ const k=rvMin(); $('rv-m').value=k.pitch; $('rv-e').value=k.edge; rivet(); });
 $('rv-pref').addEventListener('input',rivet);
