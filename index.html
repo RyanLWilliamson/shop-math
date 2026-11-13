@@ -54,6 +54,11 @@
   td:nth-child(even){color:var(--dim);text-align:right;padding-right:12px}
   .btn{margin-top:12px;width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:#0e1013;color:var(--dim);font-size:15px;font-weight:600}
   .tbtn{padding:0 14px;border-radius:10px;border:1px solid var(--line);background:#0e1013;color:var(--accent);font-size:15px;font-weight:600}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  .chips button{border:1px solid var(--line);background:#0e1013;color:var(--accent);padding:7px 10px;border-radius:999px;font-size:13px;font-weight:600}
+  .res.stack{display:block}
+  .res.stack b{display:block;font-size:17px;margin-bottom:2px}
+  .res.stack span{display:block;text-align:left}
   footer{color:var(--dim);font-size:12px;text-align:center;padding:10px 16px 30px}
 </style>
 </head>
@@ -65,6 +70,7 @@
   <button data-t="frac">Fractions</button>
   <button data-t="bend">Bend</button>
   <button data-t="rivet">Rivets</button>
+  <button data-t="hw">Hardware</button>
   <button data-t="conv">Convert</button>
 </nav>
 <main>
@@ -251,6 +257,45 @@
   </div>
 </section>
 
+<!-- HARDWARE -->
+<section id="hw">
+  <div class="card">
+    <h2>Decode a part number</h2>
+    <label>Bolt, nut, washer or rivet number</label>
+    <input id="hw-pn" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" value="AN4H12A">
+    <div class="chips" id="hw-ex"></div>
+    <div class="out" id="hw-out"></div>
+  </div>
+
+  <div class="card">
+    <h2>Bolt head markings</h2>
+    <div class="out">
+      <div class="res"><b>✱ / ✚</b><span>cross or asterisk: alloy (standard AN) steel</span></div>
+      <div class="res"><b>—</b><span>one raised dash: corrosion-resistant steel</span></div>
+      <div class="res"><b>— —</b><span>two raised dashes: aluminum alloy</span></div>
+      <div class="res"><b>▲</b><span>raised or recessed triangle: close tolerance</span></div>
+      <div class="res"><b>blank</b><span>no marking: low strength</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Rivet head markings</h2>
+    <div class="out">
+      <div class="res"><b>A</b><span>plain head · 1100 aluminum</span></div>
+      <div class="res"><b>AD</b><span>recessed dimple · 2117-T4</span></div>
+      <div class="res"><b>B</b><span>raised cross · 5056</span></div>
+      <div class="res"><b>D</b><span>raised dot · 2017-T4</span></div>
+      <div class="res"><b>DD</b><span>two raised dashes · 2024-T4</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Common nuts</h2>
+    <div class="out" id="hw-nuts"></div>
+    <p class="note">Sources: AC 43.13-1B chapter 7; FAA AMT handbooks; AN/MS standards as listed by Aircraft Spruce, Univair and EverySpec. Head markings and the rivet chart are not yet checked against your 8083. The aircraft's parts catalog is what decides a replacement part.</p>
+  </div>
+</section>
+
 <!-- CONVERSIONS -->
 <section id="conv">
   <div class="card">
@@ -266,7 +311,7 @@
 </section>
 
 </main>
-<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v13</span></footer>
+<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v14</span></footer>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -478,6 +523,73 @@ $('rv-teq').addEventListener('click',()=>rvSetT(1));
 $('rv-pref').addEventListener('input',rivet);
 $('rv-reset').addEventListener('click',rvReset);
 
+/* ---------- hardware ---------- */
+const HW_THREAD={'3':'10-32 (3/16")','4':'1/4-28','5':'5/16-24','6':'3/8-24','7':'7/16-20','8':'1/2-20','9':'9/16-18','10':'5/8-18'};
+const HW_WRENCH={'3':'3/8"','4':'7/16"','5':'1/2"','6':'9/16"'};
+const NUTS=[
+ ['AN310','Castle nut','Castellated. Use with a drilled-shank bolt and a cotter pin.'],
+ ['AN315','Plain hex nut','No locking feature. Needs a lock washer (AN935) or a check nut (AN316).'],
+ ['AN316','Check (jam) nut','Thin nut used to lock a plain nut.'],
+ ['AN320','Castellated shear nut','Thin castle nut for shear loads only, not tension.'],
+ ['AN363','Self-locking, all-metal','No fiber insert. For high temperature (up to 550 °F).'],
+ ['AN364','Self-locking, thin','Nylon/fiber insert. 250 °F max.'],
+ ['AN365','Self-locking','Nylon/fiber insert. 250 °F max. Use with an undrilled (A) bolt.'],
+ ['MS20365','Self-locking','MS version of the AN365 nylon-insert nut.'],
+ ['MS21042','Self-locking, all-metal','Reduced hex. Locks with deformed threads, no insert.'],
+];
+const RV_HEADS={'470':'universal head (protruding)','426':'100° countersunk (flush)'};
+const RV_MAT={'A':'1100 aluminum (plain head)','AD':'2117-T4 aluminum (dimple)','B':'5056 aluminum (raised cross)','D':'2017-T4 aluminum (raised dot)','DD':'2024-T4 aluminum (two dashes)'};
+$('hw-nuts').innerHTML=NUTS.map(([n,t,d])=>`<div class="res stack"><b>${n} · ${t}</b><span>${d}</span></div>`).join('');
+const HW_EX=['AN4H12A','AN3-5','AN6C14A','AN365-428','MS21042L3','AN960-416L','MS20470AD4-5'];
+$('hw-ex').innerHTML=HW_EX.map(x=>`<button>${x}</button>`).join('');
+$('hw-ex').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{ $('hw-pn').value=b.textContent; hw(); }));
+function hwLen(n){ // AN bolt dash: 1-7 = eighths; 10+ = inches then eighths
+  if(n>=1 && n<=7) return n/8;
+  const inch=Math.floor(n/10), e=n%10; if(n<10 || e>7) return NaN; return inch+e/8;
+}
+function hw(){
+  const s=$('hw-pn').value.toUpperCase().replace(/\s+/g,'');
+  const row=(v,l,c)=> String(v).length>14 ? `<div class="res stack${c?' '+c:''}"><b>${v}</b><span>${l}</span></div>` : res(v,l,c);
+  let m, o='';
+  if((m=s.match(/^AN(\d{1,2})(C|DD)?(H)?-?(\d{1,3})(A)?$/)) && +m[1]>=3 && +m[1]<=20){
+    const d=+m[1], L=hwLen(+m[4]);
+    if(!isFinite(L)) return $('hw-out').innerHTML=`<div class="note warn">Length dash -${m[4]} isn't valid: the last digit counts eighths, so it must be 0–7.</div>`;
+    const mat = m[2]==='C'?'corrosion-resistant steel (C)': m[2]==='DD'?'2024 aluminum alloy (DD)':'cadmium-plated steel (no letter)';
+    const holes = m[3]&&m[5]?'drilled head only (safety wire)': m[3]?'drilled head and drilled shank': m[5]?'undrilled (use a self-locking nut)':'drilled shank (castle nut + cotter pin)';
+    o = row('AN'+d,'standard hex-head airframe bolt','main')
+      + row(fracStr(d,16)+'"','diameter (AN'+d+' = '+d+'/16")')
+      + (HW_THREAD[d]?row(HW_THREAD[d],'thread (fine)'):'')
+      + row(Math.floor(L)>0?`${Math.floor(L)}${L%1?' '+fracStr(Math.round((L%1)*8),8):''}"`:fracStr(Math.round(L*8),8)+'"','length (dash -'+m[4]+')','main')
+      + row(mat,'material')
+      + row(holes,'holes ('+[(m[3]?'H':''),(m[5]?'A':'')].filter(Boolean).join(' + ')+(m[3]||m[5]?'':'no H or A')+')')
+      + (HW_WRENCH[d]?row(HW_WRENCH[d],'wrench size'):'')
+      + `<div class="note">Matching nut thread: dash -${d} (e.g. AN365-${d===3?'1032':HW_THREAD[d]?d+HW_THREAD[d].split('-')[1]:d}, MS21042-${d}).</div>`;
+  } else if((m=s.match(/^(MS20|AN)(470|426)(A|AD|B|DD|D)(\d{1,2})-(\d{1,2})$/))){
+    const n32=+m[4], len=+m[5];
+    o = row(m[1]+m[2],RV_HEADS[m[2]],'main') + row(RV_MAT[m[3]]||m[3],'material ('+m[3]+')')
+      + row(fracStr(n32,32)+'"','diameter ('+n32+'/32")','main') + row(fracStr(len,16)+'"','length ('+len+'/16")')
+      + (m[2]==='426'?'<div class="note">Countersunk rivet length is measured overall, including the head.</div>':'')
+      + `<div class="note">Drill and layout: see the Rivets tab with ${fracStr(n32,32)}" selected.</div>`;
+  } else if((m=s.match(/^(AN310|AN315|AN316|AN320|AN363|AN364|AN365|MS20365|MS21042)([A-Z]*)-?(\d{1,4})([A-Z]*)$/))){
+    const nut=NUTS.find(x=>x[0]===m[1]); let code=m[3], thread;
+    if(code.length>=3){ const t=code.match(/^(10|[4-9])(\d{2})$/); if(t) thread = (t[1]==='10'?'10':fracStr(+t[1],16))+'-'+t[2]; else if(code.length===4){ thread=code.slice(0,2)+'-'+code.slice(2); } }
+    else thread = HW_THREAD[code];
+    o = row(m[1],nut[1],'main') + row(thread||('dash -'+code),'thread size'+(thread?'':' (check the spec)'),'main')
+      + (m[2]||m[4]?row(m[2]+m[4],'material or finish letter (check the spec)'):'')
+      + `<div class="note">${nut[2]}</div>`;
+  } else if((m=s.match(/^(AN960|AN970)(C|PD|D)?-?(\d{1,3})(L)?$/))){
+    let sz=m[3], bolt;
+    if(sz==='10') bolt='#10 (3/16")'; else if(/^\d16$/.test(sz)) bolt=fracStr(+sz[0],16)+'"'; else if(/^\d{1,2}$/.test(sz)) bolt=fracStr(+sz,16)+'"';
+    const mat = m[2]==='C'?'stainless steel (C)': m[2]==='PD'?'anodized aluminum (PD)': m[2]==='D'?'aluminum (D)':'cadmium-plated steel';
+    o = row(m[1], m[1]==='AN960'?'flat washer':'flat washer, large outside diameter','main')
+      + row(bolt||('dash -'+sz),'fits bolt size','main') + row(mat,'material')
+      + (m[4]?row('light','L = thin (light series)'):'');
+  } else if(s==='') { o=''; }
+  else o='<div class="note warn">Not recognized. This decodes AN3–AN20 bolts, AN310/315/316/320/363/364/365, MS20365 and MS21042 nuts, AN960/AN970 washers, and AN470/426 and MS20470/20426 rivets.</div>';
+  $('hw-out').innerHTML=o;
+}
+$('hw-pn').addEventListener('input',hw);
+
 /* ---------- conversions ---------- */
 const CV = [
   ['Length','in','mm', x=>x*25.4, x=>x/25.4],
@@ -514,7 +626,7 @@ if ('serviceWorker' in navigator) {
 }
 
 /* init */
-torque(); ext(); dec2frac(); frac2dec(); bend(); rivet(); cvSetup();
+torque(); ext(); dec2frac(); frac2dec(); bend(); rivet(); hw(); cvSetup();
 </script>
 </body>
 </html>
