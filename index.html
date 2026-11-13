@@ -288,18 +288,29 @@
   <div class="card">
     <h2>Rivet head markings</h2>
     <div class="out">
-      <div class="res"><b>A</b><span>plain head · 1100 aluminum</span></div>
-      <div class="res"><b>AD</b><span>recessed dimple · 2117-T4</span></div>
-      <div class="res"><b>B</b><span>raised cross · 5056</span></div>
-      <div class="res"><b>D</b><span>raised dot · 2017-T4</span></div>
-      <div class="res"><b>DD</b><span>two raised dashes · 2024-T4</span></div>
+      <div class="res stack"><b>plain · 1100 (A)</b><span>shear 10,000 psi · bearing 25,000 psi · no heat treat before use</span></div>
+      <div class="res stack"><b>recessed dot · 2117-T (AD)</b><span>shear 30,000 psi · bearing 100,000 psi · no heat treat before use</span></div>
+      <div class="res stack"><b>raised dot · 2017-T (D)</b><span>shear 34,000 psi · bearing 113,000 psi · heat treat before use</span></div>
+      <div class="res stack"><b>raised dot · 2017-T HD (D)</b><span>shear 38,000 psi · bearing 126,000 psi · no heat treat before use</span></div>
+      <div class="res stack"><b>raised double dash · 2024-T (DD)</b><span>shear 41,000 psi · bearing 136,000 psi · heat treat before use</span></div>
+      <div class="res stack"><b>raised cross · 5056-T (B)</b><span>shear 27,000 psi · bearing 90,000 psi · no heat treat before use</span></div>
+      <div class="res stack"><b>three raised dashes · 7075-T73</b><span>no heat treat before use</span></div>
+      <div class="res stack"><b>recessed triangle · Carbon steel</b><span>shear 35,000 psi · bearing 90,000 psi · no heat treat before use</span></div>
+      <div class="res stack"><b>recessed dash · Corrosion-resistant steel (F)</b><span>shear 65,000 psi · bearing 90,000 psi · no heat treat before use</span></div>
+      <div class="res stack"><b>plain · Copper (C)</b><span>shear 23,000 psi · no heat treat before use</span></div>
+      <div class="res stack"><b>plain · Monel (M)</b><span>shear 49,000 psi · no heat treat before use</span></div>
+      <div class="res stack"><b>recessed double dots · Monel (nickel-copper alloy) (C)</b><span>shear 49,000 psi · no heat treat before use</span></div>
+      <div class="res stack"><b>plain · Brass</b><span>no heat treat before use</span></div>
+      <div class="res stack"><b>recessed large and small dot · Titanium</b><span>shear 95,000 psi · no heat treat before use</span></div>
     </div>
+    <p class="note">From the rivet identification table in your 8083. The letter in parentheses is the AN material code in the part number.</p>
+  </div>
   </div>
 
   <div class="card">
     <h2>Common nuts</h2>
     <div class="out" id="hw-nuts"></div>
-    <p class="note">Sources: AC 43.13-1B chapter 7; FAA AMT handbooks; AN/MS standards as listed by Aircraft Spruce, Univair and EverySpec. The rivet head markings are not yet checked against your 8083. The aircraft's parts catalog is what decides a replacement part.</p>
+    <p class="note">Sources: AC 43.13-1B chapter 7; FAA AMT handbooks; AN/MS standards as listed by Aircraft Spruce, Univair and EverySpec. The aircraft's parts catalog is what decides a replacement part.</p>
   </div>
 </section>
 
@@ -318,7 +329,7 @@
 </section>
 
 </main>
-<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v15</span></footer>
+<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v16</span></footer>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -544,8 +555,11 @@ const NUTS=[
  ['MS20365','Self-locking','MS version of the AN365 nylon-insert nut.'],
  ['MS21042','Self-locking, all-metal','Reduced hex. Locks with deformed threads, no insert.'],
 ];
-const RV_HEADS={'470':'universal head (protruding)','426':'100° countersunk (flush)'};
-const RV_MAT={'A':'1100 aluminum (plain head)','AD':'2117-T4 aluminum (dimple)','B':'5056 aluminum (raised cross)','D':'2017-T4 aluminum (raised dot)','DD':'2024-T4 aluminum (two dashes)'};
+const RV_HEADS={'470':'universal head','426':'100° countersunk head','425':'78° countersunk head','427':'100° countersunk head (steel, copper, monel)',
+  '430':'round head','435':'round head','441':'flat head','442':'flat head','455':'brazier head','456':'brazier head',
+  '20470':'universal head','20426':'100° countersunk head','20427':'100° countersunk head (steel, copper, monel)','20613':'round head (steel)','20615':'round head (copper, monel, brass)'};
+const RV_MAT={'A':'1100 aluminum · plain head','AD':'2117-T aluminum · recessed dot','B':'5056-T aluminum · raised cross','D':'2017-T aluminum · raised dot (heat treat before use; HD version: no)',
+  'DD':'2024-T aluminum · raised double dash (heat treat before use)','F':'corrosion-resistant steel · recessed dash','M':'monel · plain head','C':'copper (plain head) or monel nickel-copper alloy (recessed double dots)'};
 $('hw-nuts').innerHTML=NUTS.map(([n,t,d])=>`<div class="res stack"><b>${n} · ${t}</b><span>${d}</span></div>`).join('');
 const HW_EX=['AN4H12A','AN3-5','AN6C14A','AN365-428','MS21042L3','AN960-416L','MS20470AD4-5'];
 $('hw-ex').innerHTML=HW_EX.map(x=>`<button>${x}</button>`).join('');
@@ -571,11 +585,11 @@ function hw(){
       + row(holes,'holes ('+[(m[3]?'H':''),(m[5]?'A':'')].filter(Boolean).join(' + ')+(m[3]||m[5]?'':'no H or A')+')')
       + (HW_WRENCH[d]?row(HW_WRENCH[d],'wrench size'):'')
       + `<div class="note">Matching nut thread: dash -${d} (e.g. AN365-${d===3?'1032':HW_THREAD[d]?d+HW_THREAD[d].split('-')[1]:d}, MS21042-${d}).</div>`;
-  } else if((m=s.match(/^(MS20|AN)(470|426)(A|AD|B|DD|D)(\d{1,2})-(\d{1,2})$/))){
+  } else if((m=s.match(/^(MS|AN)(20470|20426|20427|20613|20615|470|426|425|427|430|435|441|442|455|456)(AD|DD|A|B|D|F|C|M)(\d{1,2})-(\d{1,2})$/)) && (m[1]==='MS')===(m[2].length===5)){
     const n32=+m[4], len=+m[5];
-    o = row(m[1]+m[2],RV_HEADS[m[2]],'main') + row(RV_MAT[m[3]]||m[3],'material ('+m[3]+')')
+    o = row(m[1]+m[2],RV_HEADS[m[2]]+' rivet','main') + row(RV_MAT[m[3]]||m[3],'material ('+m[3]+')')
       + row(fracStr(n32,32)+'"','diameter ('+n32+'/32")','main') + row(fracStr(len,16)+'"','length ('+len+'/16")')
-      + (m[2]==='426'?'<div class="note">Countersunk rivet length is measured overall, including the head.</div>':'')
+      + (/42[567]$/.test(m[2])?'<div class="note">Countersunk rivet length is measured overall, including the head.</div>':'')
       + `<div class="note">Drill and layout: see the Rivets tab with ${fracStr(n32,32)}" selected.</div>`;
   } else if((m=s.match(/^(AN310|AN315|AN316|AN320|AN363|AN364|AN365|MS20365|MS21042)([A-Z]*)-?(\d{1,4})([A-Z]*)$/))){
     const nut=NUTS.find(x=>x[0]===m[1]); let code=m[3], thread;
@@ -592,7 +606,7 @@ function hw(){
       + row(bolt||('dash -'+sz),'fits bolt size','main') + row(mat,'material')
       + (m[4]?row('light','L = thin (light series)'):'');
   } else if(s==='') { o=''; }
-  else o='<div class="note warn">Not recognized. This decodes AN3–AN20 bolts, AN310/315/316/320/363/364/365, MS20365 and MS21042 nuts, AN960/AN970 washers, and AN470/426 and MS20470/20426 rivets.</div>';
+  else o='<div class="note warn">Not recognized. This decodes AN3–AN20 bolts, AN310/315/316/320/363/364/365, MS20365 and MS21042 nuts, AN960/AN970 washers, and AN425–AN470 and MS20426/20427/20470/20613/20615 rivets.</div>';
   $('hw-out').innerHTML=o;
 }
 $('hw-pn').addEventListener('input',hw);
