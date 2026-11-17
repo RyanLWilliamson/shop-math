@@ -159,6 +159,17 @@
       Flat length (one bend) = A + B − 2·SB + BA. Make the sight line one radius in from the bend line, on the side that goes under the brake nose.
     </p>
   </div>
+  <div class="card">
+    <h2>Multi-bend layout (channel, Z, hat)</h2>
+    <p class="note" style="margin-top:0">Uses the thickness and bend radius above. Enter each leg to its mold lines, which for 90° bends are the outside dimensions.</p>
+    <div class="chips" id="mb-pre">
+      <button data-p="u">Channel / U</button><button data-p="z">Z</button><button data-p="hat">Hat</button>
+      <button data-p="add">+ bend</button><button data-p="del">− bend</button>
+    </div>
+    <div id="mb-in"></div>
+    <div class="out" id="mb-out"></div>
+    <p class="note">Each flat = leg − setback of each bend touching it. Total flat length = all flats + all bend allowances. A channel and a Z with the same legs have the same flat pattern; only the bend direction differs. Put the sight line one radius in from the bend line that goes under the brake nose.</p>
+  </div>
 </section>
 
 <!-- RIVET LAYOUT -->
@@ -329,7 +340,7 @@
 </section>
 
 </main>
-<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v16</span></footer>
+<footer>For quick reference only. Torque values, bend radii and layout dimensions come from the maintenance manual, the SRM and AC 43.13-1B.<br><span style="opacity:.6">shop-math-v17</span></footer>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -411,6 +422,49 @@ $('fr-f').addEventListener('input',frac2dec);
   }
   $('fr-tab').innerHTML=rows;
 })();
+
+/* ---------- multi-bend ---------- */
+let MB={legs:[1,2,1],ang:[90,90]};
+const MB_PRE={u:{legs:[1,2,1],ang:[90,90]},z:{legs:[1,2,1],ang:[90,90]},hat:{legs:[0.75,1,1.5,1,0.75],ang:[90,90,90,90]}};
+function mbBuild(){
+  let s='';
+  MB.legs.forEach((v,i)=>{
+    s+=`<label>Leg ${i+1} to mold lines (in)</label><input class="mb-leg" data-i="${i}" type="number" inputmode="decimal" value="${v}">`;
+    if(i<MB.ang.length) s+=`<label>Bend ${i+1}: degrees of bend</label><input class="mb-ang" data-i="${i}" type="number" inputmode="decimal" value="${MB.ang[i]}">`;
+  });
+  $('mb-in').innerHTML=s;
+  $('mb-in').querySelectorAll('input').forEach(el=>el.addEventListener('input',()=>{
+    (el.classList.contains('mb-leg')?MB.legs:MB.ang)[+el.dataset.i]=parseFloat(el.value); multibend(); }));
+  multibend();
+}
+document.querySelectorAll('#mb-pre button').forEach(b=>b.addEventListener('click',()=>{
+  const k=b.dataset.p;
+  if(MB_PRE[k]) MB=JSON.parse(JSON.stringify(MB_PRE[k]));
+  else if(k==='add' && MB.ang.length<8){ MB.ang.push(90); MB.legs.push(1); }
+  else if(k==='del' && MB.ang.length>1){ MB.ang.pop(); MB.legs.pop(); }
+  mbBuild();
+}));
+function multibend(){
+  const T=num('bd-t'), R=num('bd-r');
+  const in64=x=>fracStr(Math.round(x*64),64)+'"';
+  const st=(v,l,c)=>`<div class="res stack${c?' '+c:''}"><b>${v}</b><span>${l}</span></div>`;
+  if(!(T>0) || !(R>=0)) return $('mb-out').innerHTML='<div class="note warn">Enter thickness and bend radius in the card above.</div>';
+  if(MB.legs.some(x=>!(x>0)) || MB.ang.some(a=>!(a>0&&a<180))) return $('mb-out').innerHTML='<div class="note warn">Every leg must be greater than 0, and every bend between 0 and 180 degrees.</div>';
+  const BA=MB.ang.map(a=>(0.01743*R+0.0078*T)*a), SB=MB.ang.map(a=>Math.tan(a*Math.PI/360)*(R+T));
+  let pos=0, o='', bad=false, total=0;
+  MB.legs.forEach((L,i)=>{
+    const flat=L-(i>0?SB[i-1]:0)-(i<SB.length?SB[i]:0);
+    if(flat<0) bad=true;
+    pos+=flat; total+=flat;
+    o+=st(`Flat ${i+1}: ${fmt(flat,4)}"`, `≈ ${in64(flat)}`+(i<BA.length?` · bend line ${2*i+1} at ${fmt(pos,4)}" (≈ ${in64(pos)}) from left edge`:''));
+    if(i<BA.length){ pos+=BA[i]; total+=BA[i];
+      o+=st(`Bend ${i+1} allowance: ${fmt(BA[i],4)}"`, `${fmt(MB.ang[i],1)}° · bend line ${2*i+2} at ${fmt(pos,4)}" (≈ ${in64(pos)}) from left edge`); }
+  });
+  o=st(`Total flat length: ${fmt(total,4)}"`, `≈ ${in64(total)}`,'main')+o;
+  if(bad) o+='<div class="note warn">A flat came out negative: a leg is shorter than its setbacks. Use a smaller radius or longer legs.</div>';
+  $('mb-out').innerHTML=o;
+}
+['bd-t','bd-r'].forEach(i=>$(i).addEventListener('input',multibend));
 
 /* ---------- bend ---------- */
 function bend(){
@@ -647,7 +701,7 @@ if ('serviceWorker' in navigator) {
 }
 
 /* init */
-torque(); ext(); dec2frac(); frac2dec(); bend(); rivet(); hw(); cvSetup();
+torque(); ext(); dec2frac(); frac2dec(); bend(); mbBuild(); rivet(); hw(); cvSetup();
 </script>
 </body>
 </html>
